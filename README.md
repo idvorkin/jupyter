@@ -1,5 +1,5 @@
 # jupyter
-A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/github/idvorkin/jupyter/blob/master/Technology%20vs%20Entrepreneur.ipynb).
+A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/github/idvorkin/jupyter).
 
 ## Authoring Tips
 * [XKCD style graphs in matplotlib](http://nbviewer.jupyter.org/url/jakevdp.github.io/downloads/notebooks/XKCD_sketch_path.ipynb)
