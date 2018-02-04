@@ -8,6 +8,7 @@ dependencies:
   - toolz
   - matplotlib
   - dill
+  - seaborn
   - pandas
   - partd
   - bokeh
