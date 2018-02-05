@@ -13,3 +13,5 @@ dependencies:
   - partd
   - bokeh
   - dask
+  - plotly
+  - arrow
