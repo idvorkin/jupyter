@@ -18,9 +18,27 @@ A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/gi
 * O -> Create cell above
 * o -> create cell below
 
+Temporary Install of Vim plugin
+
+    %%javascript
+    Jupyter.utils.load_extensions('vim_binding/vim_binding');p
+
 
 ## Install/Setup
 * Install via Anaconda
 * Run in anaconda window: Jupyter notebook
 
+Use ssh to expose a remote server to localhost using ssh
 
+    # Connections on 8889 will get redirected to 8888 on the remote_host.
+    ssh -N -f -L localhost:8888:localhost:8889 remote_user@remote_host
+
+Resize Jupyter to window width
+
+    # Update container css
+    from IPython.core.display import display, HTML
+    display(HTML("<style>.container { width:95% !important; }</style>"))
+
+    # Make matlab drawings wider
+    height_in_inches=8
+    mpl.rc("figure", figsize=(2*height_in_inches,height_in_inches))
