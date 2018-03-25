@@ -22,6 +22,7 @@ numpy  = "*"
 pandas  = "*"
 matplotlib  =  "*"
 seaborn  =  "*"
+arrow  =  "*"
 
 # pdf editor
 pdfrw = "*"
