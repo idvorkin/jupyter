@@ -1,4 +1,4 @@
-# pipenv install 
+# pipenv install
 # pipenv shell to use
 #
 # To use in code set virtual env interpretter in code E.g.:
@@ -27,14 +27,17 @@ arrow  =  "*"
 # pdf editor
 pdfrw = "*"
 
+
+nbdime = "*"
+
+
+[dev-packages]
+
 # For VS Code editor
-#   - linter: prospector 
-#   - refactoring: rope 
+#   - linter: prospector
+#   - refactoring: rope
 #   - autoformat: yapf
 ##############################
 prospector = "*"
 rope = "*"
 yapf = "*"
-
-[dev-packages]
-
