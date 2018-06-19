@@ -10,9 +10,13 @@ A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/gi
 V2 of the jupyter shell will be jupyter-lab. They have a seperate VIM plugin:
 https://github.com/jwkvam/jupyterlab_vim
 
-installation is easy: 
+installation is easy:
 
     jupyter labextension install jupyterlab_vim
+
+## Jupyter diff tools
+
+[nbdiff](https://github.com/jupyter/nbdime#installation) - Cool tool for graphical diff of notebooks.
 
 ## Vim usage
 * Install from [here](https://github.com/lambdalisue/jupyter-vim-binding)
