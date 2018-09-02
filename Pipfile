@@ -23,6 +23,7 @@ pandas  = "*"
 matplotlib  =  "*"
 seaborn  =  "*"
 arrow  =  "*"
+ipython = "*"
 
 # pdf editor
 pdfrw = "*"
