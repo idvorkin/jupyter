@@ -6,6 +6,7 @@
 # C:\> pipenv --venv
 # vs_code_command_pallette> Select WorkSpace Interpreter
 #
+# Super slow, speed up with pipenv install --skip-lock
 
 [[source]]
 
