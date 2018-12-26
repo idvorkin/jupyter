@@ -15,22 +15,18 @@ verify_ssl = true
 name = "pypi"
 
 
+# Can turn this into requirements.txt for binder via pip freeze then pruning
 [packages]
-
-jupyter = "*"
-jupyterlab  = "*"
-numpy  = "*"
-pandas  = "*"
-matplotlib  =  "*"
-seaborn  =  "*"
 arrow  =  "*"
 ipython = "*"
-
-# pdf editor
-pdfrw = "*"
-
-
+jupyter = "*"
+jupyterlab  = "*"
+matplotlib  =  "*"
 nbdime = "*"
+numpy  = "*"
+pandas  = "*"
+pdfrw = "*" # pdf editor
+seaborn  =  "*"
 
 
 [dev-packages]
