@@ -27,6 +27,9 @@ numpy  = "*"
 pandas  = "*"
 pdfrw = "*" # pdf editor
 seaborn  =  "*"
+sklearn = "*"
+black = "==19.3b0"
+mypy  =  "*"
 
 
 [dev-packages]
