@@ -30,6 +30,7 @@ black = "==19.3b0"
 mypy  =  "*"
 nltk = "*"
 wordcloud = "*"
+spacy = "*"
 
 [dev-packages]
 # For VS Code editor
