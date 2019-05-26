@@ -9,13 +9,11 @@
 # Super slow, speed up with pipenv install --skip-lock
 
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
-
-
 # Can turn this into requirements.txt for binder via pip freeze then pruning
+
 [packages]
 arrow  =  "*"
 ipython = "*"
@@ -30,10 +28,10 @@ seaborn  =  "*"
 sklearn = "*"
 black = "==19.3b0"
 mypy  =  "*"
-
+nltk = "*"
+wordcloud = "*"
 
 [dev-packages]
-
 # For VS Code editor
 #   - linter: prospector
 #   - refactoring: rope
