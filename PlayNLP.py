@@ -4,8 +4,8 @@
 #     formats: ipynb,py:percent
 #     text_representation:
 #       extension: .py
-#       format_name: light
-#       format_version: '1.4'
+#       format_name: percent
+#       format_version: '1.2'
 #       jupytext_version: 1.1.3
 #   kernelspec:
 #     display_name: Python 3
@@ -13,11 +13,12 @@
 #     name: python3
 # ---
 
+# %% [markdown]
 # # Play with NLP
 # * https://spacy.io/
 # * https://www.nltk.org/
 
-# +
+# %%
 """
 from sklearn.datasets import fetch_openml
 from sklearn import datasets, svm, metrics
@@ -47,17 +48,19 @@ english_stop_words = set(stopwords.words("english"))
 
 # nlp = spacy.load("en_core_web_lg")  # python -m spacy download en_core_web_sm
 spacy.prefer_gpu()
-# -
 
+# %% [markdown]
 # ### Setup matplot lib to be wider
 
+# %%
 # make the plot wider
 height_in_inches = 8
 matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
+# %% [markdown]
 # ### Load corpus from my journal
 
-# +
+# %%
 
 # Load corpus of my daily ramblings
 corpus_path = os.path.expanduser("~/gits/igor2/750words/*md")
@@ -104,12 +107,12 @@ words = [word for word in initial_words if word.lower() not in all_stop_words]
 print(f"initial words {len(initial_words)} remaining words {len(words)}")
 
 
-# +
+# %%
 # Could use nltk frequency distribution, but better off building our own.
 # fd = nltk.FreqDist(words)
 # fd.plot(50, percents=True)
 
-# +
+# %%
 # Same as NLTK FreqDist, except normalized, includes cumsum, and colors
 def GraphWordDistribution(words, title="", skip=0, length=50, includeCDF=True) -> None:
     def GetPDFCDF(words):
@@ -157,39 +160,39 @@ def GraphWordDistribution(words, title="", skip=0, length=50, includeCDF=True) -
 
 
 GraphWordDistribution(words, title="Normalized Word Distribution")
-# -
 
+# %%
 skip = 10
 GraphWordDistribution(
     words, skip=skip, length=75, title=f"Distribution without top {skip} words"
 )
 
-# +
+# %%
 # wordcloud is non-deterministic, which is bizarre.
 # from wordcloud import WordCloud
 # wordcloud = WordCloud(max_font_size=50, max_words=100, background_color="white", stopwords=None).generate("".join(words))
 # plt.imshow(wordcloud,  interpolation='bilinear')
-# -
 
+# %% [markdown]
 # # Play with POS tagging and lemmatisation
 
-# +
+# %%
 # Load data model:
 nlp = spacy.load("en_core_web_lg")  # python -m spacy download en_core_web_lg
 nlp.max_length = 20 * 1000 * 1000
 
 # NOTE: Here we use data, which is not cleaned so SPACY can use it to do better POS and NER.
 import time
-
 start_time = time.time()
 doc_all = nlp(all_file_content)
-duration = time.time() - start_time
-print(f" Took {int(duration)} seconds to build document of len:{len(all_file_content)}")
-# -
+duration =  time.time() - start_time
+print(f" Took {int(duration)} seconds to build document of len:{len(all_file_content)}" )
 
+# %%
 # Remove domain specific stop words.
 doc = [token for token in doc_all if token.text.lower() not in domain_stop_words]
 
+# %%
 max_to_analyze = 15
 interesting = [token for token in doc if token.tag_ == "NNS"]
 for token in interesting[:max_to_analyze]:
@@ -197,12 +200,14 @@ for token in interesting[:max_to_analyze]:
     print(token.text, token.lemma_, token.pos_, token.tag_, token.dep_)
 
 
+# %%
 GraphWordDistribution([token.pos_ for token in doc])
 
+# %%
 # interesting =  [token for token in  doc]
 # Parts of speech: https://spacy.io/usage/linguistic-features
 # interesting_pos = "PROPN"
-interesting_pos = "ADJ ADV"
+interesting_pos = "NOUN"
 interesting_pos_set = set(interesting_pos.split())
 interesting = [token for token in doc if token.pos_ in interesting_pos_set]
 # interesting = [ token for token in doc if token.pos_ != "PUNCT" and token.pos_ != "SYM" and len(token.text) > 3]
@@ -213,3 +218,5 @@ GraphWordDistribution(
     skip=0,
     length=50,
 )
+
+# %%
