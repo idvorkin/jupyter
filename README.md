@@ -18,6 +18,20 @@ installation is easy:
 
 [nbdiff](https://github.com/jupyter/nbdime#installation) - Cool tool for graphical diff of notebooks.
 
+## Jupyter To Python Round Trip ( JupyText)
+
+https://github.com/mwouts/jupytext
+
+
+Install:
+
+    jupyter labextension install jupyterlab-jupytext
+
+Use From the command line:
+
+    # Roundtrip and execute via black
+    jupytext --sync --pipe black PlayNLP.ipynb
+
 ## Vim usage
 * Install from [here](https://github.com/lambdalisue/jupyter-vim-binding)
 * Useful Keyboard shortcuts

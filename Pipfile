@@ -31,6 +31,7 @@ mypy  =  "*"
 nltk = "*"
 wordcloud = "*"
 spacy = "*"
+jupytext = "*"
 
 [dev-packages]
 # For VS Code editor
