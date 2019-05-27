@@ -13,7 +13,7 @@
 #     name: python3
 # ---
 
-# # Play with NLP - from VIM
+# # Play with NLP
 # * https://spacy.io/
 # * https://www.nltk.org/
 
@@ -57,8 +57,8 @@ from nltk.tokenize import word_tokenize
 from pathlib import Path
 
 # Load corpus of my daily ramblings
-# mypath = os.path.expanduser("~/gits/igor2/750words/*md")
-corpus_path = os.path.expanduser("/mnt/c/Users/idvor/OneDrive/backup/Diary/*txt")
+corpus_path = os.path.expanduser("~/gits/igor2/750words/*md")
+# corpus_path = os.path.expanduser("/mnt/c/Users/idvor/OneDrive/backup/Diary/*txt")
 corpus_files = glob.glob(corpus_path)
 
 """
@@ -69,7 +69,7 @@ corpus_files = glob.glob(corpus_path)
 A] Below code results in all strings Loaded into memory for temporary,  then merged into a second string.
 aka Memory = O(2*file_conent) and CPU O(2*file_content)
 
-B] An alternative is to do += on a string results in a new memory allocation and copy.
+B] An alternative is to do += on a string results in a new memory allocation and copy. 
 aka Memory = O(file_content) , CPU O(files*file_content)
 
 However, this stuff needs to be measured, as it's also a funtion of GC. Not in the GC versions there is no change in CPU
@@ -186,8 +186,8 @@ GraphWordDistribution([token.pos_ for token in doc])
 
 # interesting =  [token for token in  doc]
 # Parts of speech: https://spacy.io/usage/linguistic-features
-interesting_pos = "PROPN "
-# interesting_pos = "NOUN"
+# interesting_pos = "PROPN"
+interesting_pos = "NOUN"
 interesting_pos_set = set(interesting_pos.split())
 interesting = [token for token in doc if token.pos_ in interesting_pos_set]
 # interesting = [ token for token in doc if token.pos_ != "PUNCT" and token.pos_ != "SYM" and len(token.text) > 3]
