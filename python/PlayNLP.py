@@ -42,7 +42,6 @@ spacy.prefer_gpu()
 # nlp = spacy.load("en_core_web_sm")  # python -m spacy download en_core_web_sm
 # -
 
-
 # ### Setup matplot lib to be wider
 
 # make the plot wider

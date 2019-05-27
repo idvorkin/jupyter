@@ -12,18 +12,27 @@
 #     name: python3
 # ---
 
-class QueueFromStacks():
+# +
+from typing import List, Set, Dict, Tuple, Optional
+
+
+class QueueFromStacks:
     def __init__(self):
-        self.newOnTop=[]
-        self.oldOnTop=[]
+        self.newOnTop: List[int] = []
+        self.oldOnTop: List[int] = []
+
     def push(self, v):
         self.newOnTop.append(v)
+
     def pop(self):
         if len(self.oldOnTop) == 0:
             # take from new on top to build oldOnTop
-            while len (self.newOnTop ) != 0 : self.oldOnTop.append(self.newOnTop.pop())
-        return self.oldOnTop.pop() 
+            while len(self.newOnTop) != 0:
+                self.oldOnTop.append(self.newOnTop.pop())
+        return self.oldOnTop.pop()
 
+
+# -
 
 m = QueueFromStacks()
 m.push(3)
@@ -34,3 +43,5 @@ m.pop()
 m.pop()
 m.push(8)
 m.pop()
+
+
