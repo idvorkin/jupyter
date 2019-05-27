@@ -13,7 +13,7 @@
 #     name: python3
 # ---
 
-# # Play with NLP
+# # Play with NLP - from VIM
 # * https://spacy.io/
 # * https://www.nltk.org/
 
@@ -42,6 +42,7 @@ spacy.prefer_gpu()
 # nlp = spacy.load("en_core_web_sm")  # python -m spacy download en_core_web_sm
 # -
 
+
 # ### Setup matplot lib to be wider
 
 # make the plot wider
@@ -69,7 +70,7 @@ corpus_files = glob.glob(corpus_path)
 A] Below code results in all strings Loaded into memory for temporary,  then merged into a second string.
 aka Memory = O(2*file_conent) and CPU O(2*file_content)
 
-B] An alternative is to do += on a string results in a new memory allocation and copy. 
+B] An alternative is to do += on a string results in a new memory allocation and copy.
 aka Memory = O(file_content) , CPU O(files*file_content)
 
 However, this stuff needs to be measured, as it's also a funtion of GC. Not in the GC versions there is no change in CPU

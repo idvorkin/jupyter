@@ -6,7 +6,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "pretty-quick --staged"
+      "pre-commit": "pretty-quick --staged && jupytext --from ipynb --pipe black --pre-commit jupytext --from ipynb --to python//py:light --pre-commit"
     }
   }
 }
