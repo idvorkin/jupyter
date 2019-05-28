@@ -151,7 +151,7 @@ def DocForCorpus(nlp, corpus: Corpus):
 
 # %%
 # make the plot wider
-height_in_inches = 8
+height_in_inches = 4
 matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
 # %% [markdown]
@@ -238,7 +238,7 @@ GraphWordDistribution(
 nlp = get_nlp_model('en_core_web_lg')
 nlp.max_length = 100*1000*1000
 
-def GraphPoSForDoc(pos, doc):
+def GraphPoSForDoc(pos:str, doc, corpus: Corpus):
     interesting_pos = pos
     interesting_pos_set = set(interesting_pos.split())
     interesting = [token for token in doc if token.pos_ in interesting_pos_set]
@@ -246,9 +246,9 @@ def GraphPoSForDoc(pos, doc):
 
     GraphWordDistribution(
         interesting_words,
-        title=f"Distribution of {interesting_pos} on {corpus_path}",
+        title=f"Distribution of {interesting_pos} on {corpus.path}",
         skip=0,
-        length=50,
+        length=20,
     )
 
 
@@ -256,13 +256,13 @@ def GraphScratchForCorpus(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"):
     nlp = get_nlp_model("en_core_web_lg")
     corpus = LoadCorpus(corpus_path)
     doc = DocForCorpus(nlp, corpus)
-    GraphPoSForDoc(pos, doc)
+    GraphPoSForDoc(pos, doc, corpus)
 
 
 # %%
-corpus_paths = ["~/gits/igor2/750words/2018*md", 
-                "~/gits/igor2/750words/2019*md", 
-"/mnt/c/Users/idvor/OneDrive/backup/Diary/*2012*txt", 
+corpus_paths = ["~/gits/igor2/750words/2019*md",
+                "~/gits/igor2/750words/2018*md",
+"/mnt/c/Users/idvor/OneDrive/backup/Diary/*2012*txt",
 "/mnt/c/Users/idvor/OneDrive/backup/Diary/*2011*txt",
                ]
 
