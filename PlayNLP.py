@@ -235,6 +235,9 @@ GraphWordDistribution(
 # # Play with POS tagging and lemmatisation
 
 # %%
+nlp = get_nlp_model('en_core_web_lg')
+nlp.max_length = 100*1000*1000
+
 def GraphPoSForDoc(pos, doc):
     interesting_pos = pos
     interesting_pos_set = set(interesting_pos.split())
@@ -257,8 +260,11 @@ def GraphScratchForCorpus(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"):
 
 
 # %%
-corpus_paths = ["~/gits/igor2/750words/2018*md", "~/gits/igor2/750words/2019*md"]
-# "/mnt/c/Users/idvor/OneDrive/backup/Diary/*txt"
+corpus_paths = ["~/gits/igor2/750words/2018*md", 
+                "~/gits/igor2/750words/2019*md", 
+"/mnt/c/Users/idvor/OneDrive/backup/Diary/*2012*txt", 
+"/mnt/c/Users/idvor/OneDrive/backup/Diary/*2011*txt",
+               ]
 
 for c in corpus_paths:
     GraphScratchForCorpus(c, pos="NOUN")
@@ -278,5 +284,7 @@ for token in interesting[:max_to_analyze]:
 GraphWordDistribution([token.pos_ for token in doc], title=f"POS Distribution on {corpus_path}")
 # interesting = [ token for token in doc if token.pos_ != "PUNCT" and token.pos_ != "SYM" and len(token.text) > 3]
 """
+
+# %%
 
 # %%
