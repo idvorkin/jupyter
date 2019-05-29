@@ -59,8 +59,8 @@ Temporary Install of Vim plugin
 
 Use ssh to expose a remote server to localhost using ssh
 
-    # Connections on 8889 will get redirected to 8888 on the remote_host.
-    ssh -N -f -L localhost:8888:localhost:8889 remote_user@remote_host
+    # Connections on 4444 will get redirected to 8888 on the remote_host.
+    ssh -N -L localhost:8888:localhost:4444 remote_user@remote_host
 
 Resize Jupyter to window width
 
