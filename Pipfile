@@ -32,6 +32,8 @@ nltk = "*"
 wordcloud = "*"
 spacy = "*"
 jupytext = "*"
+swifter = "*"
+humanize = "*"
 
 [dev-packages]
 # For VS Code editor
