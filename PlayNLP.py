@@ -272,13 +272,28 @@ def GetInterestingForCorpusPath(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"
 
 # %%
 corpus_paths_months_2019 = [
+    "~/gits/igor2/750words/2018-09-*md",
+    "~/gits/igor2/750words/2018-10-*md",
+    "~/gits/igor2/750words/2018-11-*md",
+    "~/gits/igor2/750words/2018-12-*md",
     "~/gits/igor2/750words/2019-01-*md",
     "~/gits/igor2/750words/2019-02-*md",
     "~/gits/igor2/750words/2019-03-*md",
     "~/gits/igor2/750words/2019-04-*md",
     "~/gits/igor2/750words/2019-05*md",
     "~/gits/igor2/750words/2019-06-*md",
-]
+] 
+
+#Words-export-2018-03-01.txt
+# 750 Words-export-2019-06-01.txt
+# I didn't really write in 2018 Jan/Feb
+corpus_paths_months_2018 =  [f"~/gits/igor2/750words_archive/750 Words-export-2018-0{i}-01.txt" for i in range(3,8)] +  [
+    "~/gits/igor2/750words/2018-09-*md",
+    "~/gits/igor2/750words/2018-10-*md",
+    "~/gits/igor2/750words/2018-11-*md",
+    "~/gits/igor2/750words/2018-12-*md",
+    ]
+print (corpus_paths_months_2018)
 
 corpus_paths_years = [
     "~/gits/igor2/750words_archive/*2012*txt",
@@ -292,8 +307,8 @@ corpus_paths_years = [
     "~/gits/igor2/750words/2019-*md",
 ]
 
-corpus_paths = corpus_paths_months_2019
 corpus_paths = corpus_paths_years
+corpus_paths = corpus_paths_months_2018
 for c in corpus_paths:
     GraphScratchForCorpus(c, pos="PROPN")
 
@@ -353,7 +368,10 @@ corpus = [
 ]
 
 # [Series[idx=word, value=PropN_Frequency]]
-wordByTimespan = pd.DataFrame().join(corpus, how="outer", sort=False)
+#wordByTimespan = pd.DataFrame().join(corpus, how="outer", sort=False)
+wordByTimespan = pd.DataFrame()
+for r in corpus: 
+    wordByTimespan = wordByTimespan.join(r, how="outer")
 
 # Sort by word frequency
 wordByTimespan["word_frequency"] = wordByTimespan.sum(skipna=True, axis="columns")
@@ -362,18 +380,18 @@ wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
 # Remove total column
 wordByTimespan = wordByTimespan.iloc[:, :-1]
 
-height_in_inches = 8
+height_in_inches = 6
 matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
 # combined bar graph
 # wordByTimespan.iloc[:10,:].plot(kind="bar",subplots=False, legend=True, animated=True, figsize=(16,8))
 
 # subplot per month
-wordByTimespan.plot(kind="bar",subplots=True, legend=False)
+# wordByTimespan.plot(kind="bar",subplots=True, legend=False)
 
 # subplot per month - top 10
 # XXX: Interesting - you need to syncronize all subplots to be same height as they all have the same axix
-# wordByTimespan.iloc[:15, :].T.plot( kind="bar", subplots=True, legend=False, figsize=(15, 14), sharey=True )
+wordByTimespan.iloc[:15, :].T.plot( kind="bar", subplots=True, legend=False, figsize=(15, 14), sharey=True )
 
 # %%
 
