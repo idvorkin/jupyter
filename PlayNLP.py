@@ -13,10 +13,7 @@
 #     name: python3
 # ---
 
-# %% [markdown]
-# # Play with NLP
-# * https://spacy.io/
-# * https://www.nltk.org/
+# %%
 
 # %%
 """
@@ -47,6 +44,11 @@ import time
 from functools import lru_cache
 
 
+# %% [markdown]
+# # Play with NLP
+# * https://spacy.io/
+# * https://www.nltk.org/
+
 # %%
 # This function is in the first block so you don't
 # recreate it willy nilly, as it includes a cache.
@@ -57,7 +59,7 @@ nltk.download("stopwords")
 # Should be factored out
 domain_stop_words = set(
     """
-    yes yup Affirmations get that's
+    yes yup Affirmations get that's Journal
     Deliberate Disciplined Daily
     Know Essential Provide Context
     First Understand Appreciate
@@ -88,7 +90,7 @@ class Corpus:
         return self.path.__hash__()
 
 
-@lru_cache(maxsize=10)
+@lru_cache(maxsize=100)
 def LoadCorpus(corpus_path: str) -> Corpus:
 
     # Hym consider memoizing this asweel..
@@ -132,7 +134,7 @@ def LoadCorpus(corpus_path: str) -> Corpus:
     )
 
 
-@lru_cache(maxsize=10)
+@lru_cache(maxsize=100)
 def DocForCorpus(nlp, corpus: Corpus):
     print(
         f"initial words {len(corpus.initial_words)} remaining words {len(corpus.words)}"
@@ -151,7 +153,7 @@ def DocForCorpus(nlp, corpus: Corpus):
 
 # %%
 # make the plot wider
-height_in_inches = 4
+height_in_inches = 8
 matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
 # %% [markdown]
@@ -235,39 +237,68 @@ GraphWordDistribution(
 # # Play with POS tagging and lemmatisation
 
 # %%
-nlp = get_nlp_model('en_core_web_lg')
-nlp.max_length = 100*1000*1000
+nlp = get_nlp_model("en_core_web_lg")
+nlp.max_length = 100 * 1000 * 1000
 
-def GraphPoSForDoc(pos:str, doc, corpus: Corpus):
+
+def GetInterestingWords(pos: str, doc, corpus: Corpus):
     interesting_pos = pos
     interesting_pos_set = set(interesting_pos.split())
     interesting = [token for token in doc if token.pos_ in interesting_pos_set]
     interesting_words = [token.lemma_ for token in interesting]
+    return interesting_words
 
+
+def GraphPoSForDoc(pos: str, doc, corpus):
     GraphWordDistribution(
-        interesting_words,
-        title=f"Distribution of {interesting_pos} on {corpus.path}",
+        GetInterestingWords(pos, doc, corpus=corpus),
+        title=f"Distribution of {pos} on {corpus.path}",
         skip=0,
         length=20,
     )
 
 
 def GraphScratchForCorpus(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"):
-    nlp = get_nlp_model("en_core_web_lg")
     corpus = LoadCorpus(corpus_path)
     doc = DocForCorpus(nlp, corpus)
     GraphPoSForDoc(pos, doc, corpus)
 
 
-# %%
-corpus_paths = ["~/gits/igor2/750words/2019*md",
-                "~/gits/igor2/750words/2018*md",
-"/mnt/c/Users/idvor/OneDrive/backup/Diary/*2012*txt",
-"/mnt/c/Users/idvor/OneDrive/backup/Diary/*2011*txt",
-               ]
+def GetInterestingForCorpusPath(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"):
+    corpus = LoadCorpus(corpus_path)
+    doc = DocForCorpus(nlp, corpus)
+    return GetInterestingWords(pos, doc, corpus)
 
+
+# %%
+corpus_paths_months_2019 = [
+    "~/gits/igor2/750words/2019-01-*md",
+    "~/gits/igor2/750words/2019-02-*md",
+    "~/gits/igor2/750words/2019-03-*md",
+    "~/gits/igor2/750words/2019-04-*md",
+    "~/gits/igor2/750words/2019-05*md",
+    "~/gits/igor2/750words/2019-06-*md",
+]
+
+corpus_paths_years = [
+    "~/gits/igor2/750words_archive/*2012*txt",
+    "~/gits/igor2/750words_archive/*2013*txt",
+    "~/gits/igor2/750words_archive/*2014*txt",
+    "~/gits/igor2/750words_archive/*2015*txt",
+    "~/gits/igor2/750words_archive/*2016*txt",
+    "~/gits/igor2/750words_archive/*2017*txt",
+    "~/gits/igor2/750words_archive/*2018*txt",
+    "~/gits/igor2/750words/2018*md",
+    "~/gits/igor2/750words/2019-*md",
+]
+
+corpus_paths = corpus_paths_months_2019
+corpus_paths = corpus_paths_years
 for c in corpus_paths:
-    GraphScratchForCorpus(c, pos="NOUN")
+    GraphScratchForCorpus(c, pos="PROPN")
+
+# %% [raw]
+#
 
 # %% [markdown]
 # # Debugging when stuff goes goofy.
@@ -284,6 +315,65 @@ for token in interesting[:max_to_analyze]:
 GraphWordDistribution([token.pos_ for token in doc], title=f"POS Distribution on {corpus_path}")
 # interesting = [ token for token in doc if token.pos_ != "PUNCT" and token.pos_ != "SYM" and len(token.text) > 3]
 """
+
+# %%
+# Visualizing thinking over time.
+# A] Sentiment over time. Graph valence as line graph time series (TBD: Use cloud service to analyze each file)
+# B] Graph a bar chart of Proper noun, have it update per corpus file.
+#        Leave the x axis where they are.
+
+# %%
+# build a data frame of word frequency "Proper Noun"x"Corpus"
+# Should sort by Time based impactful proper noun.
+# Row subtitle is the "Time based Maximum Proper Noun"
+# Graph update every second.
+
+# %%
+
+# %%
+# yup going to need some refactoring
+nlp = get_nlp_model("en_core_web_lg")
+
+# corpus = LoadCorpus(corpus_path)
+# DocForCorpus(nlp, LoadCorpus(p))
+
+
+def GetPDFCDF(words, path):
+    def ToPercent(x: float) -> float:
+        return x * 100
+
+    # NOTE: No point creating a full data frame when only using a single column.
+    pdf = pd.Series(words, name=path).value_counts(normalize=True).apply(ToPercent)
+    cdf = pdf.cumsum()
+    return (pdf, cdf)
+
+
+corpus = [
+    GetPDFCDF(GetInterestingForCorpusPath(p, "PROPN"), p)[0][:10] for p in corpus_paths
+]
+
+# [Series[idx=word, value=PropN_Frequency]]
+wordByTimespan = pd.DataFrame().join(corpus, how="outer", sort=False)
+
+# Sort by word frequency
+wordByTimespan["word_frequency"] = wordByTimespan.sum(skipna=True, axis="columns")
+wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
+
+# Remove total column
+wordByTimespan = wordByTimespan.iloc[:, :-1]
+
+height_in_inches = 8
+matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
+
+# combined bar graph
+# wordByTimespan.iloc[:10,:].plot(kind="bar",subplots=False, legend=True, animated=True, figsize=(16,8))
+
+# subplot per month
+wordByTimespan.plot(kind="bar",subplots=True, legend=False)
+
+# subplot per month - top 10
+# XXX: Interesting - you need to syncronize all subplots to be same height as they all have the same axix
+# wordByTimespan.iloc[:15, :].T.plot( kind="bar", subplots=True, legend=False, figsize=(15, 14), sharey=True )
 
 # %%
 
