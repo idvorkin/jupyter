@@ -121,9 +121,33 @@ def LoadCorpus(corpus_path: str) -> Corpus:
     # Make single string from all the file contents.
     list_file_content = [Path(file_name).read_text() for file_name in corpus_files]
     all_file_content = " ".join(list_file_content)
-
+    
+    # Upper case Magic to make it a proper noun and see how it ranks!
+    
+    properNouns = "zach ammon Tori amelia josh Ray javier Neha".split()
+    
+    def capitalizeProperNouns(s:str):
+        for noun in properNouns:
+            noun = noun.lower()
+            properNoun = noun[0].upper()+noun[1:]
+            s = s.replace(noun,properNoun)
+        return s
+    
+    typos = [("waht", "what")
+                 ,('I"ll', "I'll")
+                ]
+    
+    def fixTypos(s:str):
+        for typo in typos:
+            s = s.replace(typo[0],typo[1])
+        return s
+        
+    all_file_content = fixTypos(all_file_content)
+    all_file_content = capitalizeProperNouns(all_file_content)
+    
     # Clean out some punctuation (although does that mess up stemming later??)
     initial_words = all_file_content.replace(",", " ").replace(".", " ").split()
+    
 
     words = [word for word in initial_words if word.lower() not in all_stop_words]
     return Corpus(
@@ -271,9 +295,9 @@ def GetInterestingForCorpusPath(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"
 
 
 # %%
-corpus_paths_months_2019 = [
+
+corpus_paths_months_trailing = [
     "~/gits/igor2/750words/2018-09-*md",
-    "~/gits/igor2/750words/2018-10-*md",
     "~/gits/igor2/750words/2018-11-*md",
     "~/gits/igor2/750words/2018-12-*md",
     "~/gits/igor2/750words/2019-01-*md",
@@ -283,17 +307,29 @@ corpus_paths_months_2019 = [
     "~/gits/igor2/750words/2019-05*md",
     "~/gits/igor2/750words/2019-06-*md",
 ] 
+    
+corpus_paths_months_2019 = [
+    "~/gits/igor2/750words/2019-01-*md",
+    "~/gits/igor2/750words/2019-02-*md",
+    "~/gits/igor2/750words/2019-03-*md",
+    "~/gits/igor2/750words/2019-04-*md",
+    "~/gits/igor2/750words/2019-05*md",
+    "~/gits/igor2/750words/2019-06-*md",
+] 
+
+# Note 2018-10 is crappy, remove it.    
+#    "~/gits/igor2/750words/2018-10-*md",
 
 #Words-export-2018-03-01.txt
 # 750 Words-export-2019-06-01.txt
-# I didn't really write in 2018 Jan/Feb
+# I didn't really write in 2018 Jan/Feb/October
+# "~/gits/igor2/750words/2018-10-*md",
+
 corpus_paths_months_2018 =  [f"~/gits/igor2/750words_archive/750 Words-export-2018-0{i}-01.txt" for i in range(3,8)] +  [
     "~/gits/igor2/750words/2018-09-*md",
-    "~/gits/igor2/750words/2018-10-*md",
     "~/gits/igor2/750words/2018-11-*md",
     "~/gits/igor2/750words/2018-12-*md",
     ]
-print (corpus_paths_months_2018)
 
 corpus_paths_years = [
     "~/gits/igor2/750words_archive/*2012*txt",
@@ -307,8 +343,12 @@ corpus_paths_years = [
     "~/gits/igor2/750words/2019-*md",
 ]
 
+# TODO: Add a pass to remove things with insufficient words.
+
 corpus_paths = corpus_paths_years
-corpus_paths = corpus_paths_months_2018
+#corpus_paths = corpus_paths_months_2018 + corpus_paths_months_2019
+corpus_paths = corpus_paths_months_trailing
+print (corpus_paths)
 for c in corpus_paths:
     GraphScratchForCorpus(c, pos="PROPN")
 
@@ -353,18 +393,24 @@ nlp = get_nlp_model("en_core_web_lg")
 # DocForCorpus(nlp, LoadCorpus(p))
 
 
-def GetPDFCDF(words, path):
+def GetPDFCDF(words, name):
     def ToPercent(x: float) -> float:
         return x * 100
 
     # NOTE: No point creating a full data frame when only using a single column.
-    pdf = pd.Series(words, name=path).value_counts(normalize=True).apply(ToPercent)
+    pdf = pd.Series(words, name=name).value_counts(normalize=True).apply(ToPercent)
     cdf = pdf.cumsum()
     return (pdf, cdf)
 
+def PathToHead(path:str):
+    path =  path.split("/")[-1]
+    if 'export-' in path:
+        return path.split("export-")[-1]
+    else:
+        return path
 
 corpus = [
-    GetPDFCDF(GetInterestingForCorpusPath(p, "PROPN"), p)[0][:10] for p in corpus_paths
+    GetPDFCDF(GetInterestingForCorpusPath(p, "PROPN"), PathToHead(p))[0][:10] for p in corpus_paths
 ]
 
 # [Series[idx=word, value=PropN_Frequency]]
@@ -374,6 +420,7 @@ for r in corpus:
     wordByTimespan = wordByTimespan.join(r, how="outer")
 
 # Sort by word frequency
+# NOTE: I suspect it'd be interesting to sort by TF*IDF because it'll make words that are present only in a few months still pop out.
 wordByTimespan["word_frequency"] = wordByTimespan.sum(skipna=True, axis="columns")
 wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
 
@@ -391,7 +438,9 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
 # subplot per month - top 10
 # XXX: Interesting - you need to syncronize all subplots to be same height as they all have the same axix
-wordByTimespan.iloc[:15, :].T.plot( kind="bar", subplots=True, legend=False, figsize=(15, 14), sharey=True )
+wordByTimespan.iloc[:30, :].T.plot( kind="bar", subplots=True, legend=False, figsize=(15, 14), sharey=True )
+#wordByTimespan.iloc[:30, :].plot( kind="bar", subplots=True, legend=False, figsize=(15, 14), sharey=True )
+#wordByTimespan.iloc[:13, :].T.plot( kind="bar", subplots=False, legend=True, figsize=(15, 14), sharey=True )
 
 # %%
 
