@@ -44,3 +44,9 @@ humanize = "*"
 prospector = "*"
 rope = "*"
 yapf = "*"
+pylint = "*"
+black = "*"
+pylama = "*"
+
+[pipenv]
+allow_prereleases = true
