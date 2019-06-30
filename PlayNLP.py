@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.1.3
+#       jupytext_version: 1.1.6
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -216,7 +216,7 @@ corpus_path_months = {
     year: corpus_paths_months_for_year(year) for year in range(2012, 2018)
 }
 
-# 2018  changes from archive to markdown.
+# 2018 Changes from archive to markdown.
 # 2018 Jan/Feb/October don't have enough data for analysis
 corpus_path_months[2018] = [glob750archive(2018, month) for month in range(3, 8)] + [
     glob750(2018, month) for month in (9, 11, 12)
@@ -224,11 +224,11 @@ corpus_path_months[2018] = [glob750archive(2018, month) for month in range(3, 8)
 
 corpus_path_months[2019] = [glob750(2019, month) for month in range(1, 7)]
 
-corpus_paths_months_trailing = [
+corpus_path_months_trailing = [
     glob750(2018, month) for month in (9, 11, 12)
 ] + corpus_path_months[2019]
 
-corpus_paths_years = [
+corpus_path_years = [
     "~/gits/igor2/750words_archive/*2012*txt",
     "~/gits/igor2/750words_archive/*2013*txt",
     "~/gits/igor2/750words_archive/*2014*txt",
@@ -252,7 +252,7 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 # ### Load simple corpus for my journal
 
 # %%
-corpus = LoadCorpus(corpus_paths_months_for_year[2019][0])
+corpus = LoadCorpus(corpus_path_months[2019][0])
 print(f"initial words {len(corpus.initial_words)} remaining words {len(corpus.words)}")
 
 
@@ -434,8 +434,8 @@ wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
 wordByTimespan = wordByTimespan.iloc[:, :-1]
 
 # wordByTimespan.iloc[:50, :].plot( kind="bar", subplots=False, legend=False, figsize=(15, 14), sharey=True )
-wordByTimespan.iloc[:30, :].T.plot(
-    kind="bar", subplots=True, legend=False, figsize=(15, 25), sharey=True
+wordByTimespan.iloc[:8, :].T.plot(
+    kind="bar", subplots=True, legend=False, figsize=(15, 9), sharey=True
 )
 # wordByTimespan.iloc[:13, :].T.plot( kind="bar", subplots=False, legend=True, figsize=(15, 14), sharey=True )
 
@@ -447,5 +447,12 @@ doc = DocForCorpus(nlp, corpus)
 for t in doc[400:600]:
 print(f"{t} {t.lemma_} {t.pos_}")
 """
+from spacy import displacy
+
+displacy.render(nlp("Igor wonders if Ray is working too much"))
+
+# %%
+a+3+3
+
 
 # %%

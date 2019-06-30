@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.1.3
+#       jupytext_version: 1.1.7-rc0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -232,4 +232,4 @@ cid_by_date.T[cid_sorted_by_sum[:4]].plot()
 
 
 # %%
-import humanize
+# %%
