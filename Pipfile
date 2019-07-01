@@ -34,6 +34,9 @@ spacy = "*"
 jupytext = "*"
 swifter = "*"
 humanize = "*"
+lime = "*"
+pandas-profiling = "*"
+numba = "*"
 
 [dev-packages]
 # For VS Code editor
