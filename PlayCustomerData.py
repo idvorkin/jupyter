@@ -66,8 +66,8 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
 # %%
 # Export Data from healthkit using [qs-access](https://itunes.apple.com/us/app/qs-access/id920297614?mt=8) app
-raw_csv = "~/data/igor.all.csv"
-# raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
+# raw_csv = "~/data/wamd.all.csv"
+raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
 cleaned_df_pickled = f"{raw_csv}.pickle.gz"
 
 
@@ -77,20 +77,21 @@ cleaned_df_pickled = f"{raw_csv}.pickle.gz"
 # df = df.compute()
 # df = pd.read_csv(raw_csv,sep='\t')
 # df = pd.read_csv(raw_csv, sep="|", lineterminator="\n")
-df = pd.read_csv(raw_csv, sep="\t")
+# df = pd.read_csv(raw_csv, sep="\t")
+df
 
 
 # %%
 # clean up some  data
 
+datetimeColumnName, customerIdColumnName = "date_uct", "id"
+
 # setup date column
-datetimeColumnName = "datetime_name"
-customerIdColumnName = "customer_id_name"
 df["datetime"] = pd.to_datetime(df[datetimeColumnName], errors="coerce")
 df = df.set_index(df.datetime)
 
 # setup customer id
-df["customer_id"] = df.customerIdColumnName
+df["customer_id"] = df[customerIdColumnName]
 
 # %%
 # df = df.compute()
@@ -185,15 +186,61 @@ plot_distribution_for(df, 10, 500)
 # %% [markdown]
 # # MAU/WAU/DAU analysis
 
-# %%
-# throw away all customers who only call once.
 
-# for remaining customers group into time index,
-# pivot (cidx time_index)
-#      | tindex_1 | tindex_2 | tindex_3| sum
-# cid1 |
-# sum along cid
-# if sum matches like clos to column index call them the right value
+# %%
+freq = "M"
+cid_by_date = df["2019":].pivot_table(
+    values="datetime",
+    index=["customer_id"],
+    columns=pd.Grouper(freq=freq),
+    aggfunc="any",
+)
+# cid_sorted_by_sum = cid_by_date.T.sum().sort_values(ascending=False).index
+# cid_by_date = cid_by_date.sort_values("customer_id")
+# cid_by_date.T[cid_sorted_by_sum[4:5]].plot()
+# cid_by_date.T.count().sort_values()
+# df_hc.pivot_table(index=["customer_id"], columns=pd.Grouper(freq=freq), aggfunc="count")[ "customer_id" ].T.plot(title=f"customer {irange} by freq={freq}", figsize=(12, 8))
+
+
+#%%
+def cid_by_freq(df, freq):
+    return df["2019":].pivot_table(
+        values="datetime",
+        index=["customer_id"],
+        columns=pd.Grouper(freq=freq),
+        aggfunc="any",
+    )
+
+
+# t = cid_by_freq(df, "M")
+
+
+#%%
+# cid_by_date.T.sum().sort_values(ascending=False)
+def print_freq(df, freq, cuteName, minUsage):
+    # minUsage should be inferred
+    c = cid_by_freq(df, freq).T.sum()
+    print(f"{cuteName}:{intcomma(len(c[c >= minUsage ]))}")
+
+
+# NOTE: Could speed up significantly by removing
+# Single time users
+df_multi = df_w_multi_customers(df)
+print(f"N:{intcomma(len(df.customer_id.value_counts()))}")
+print(f"N(>1):{intcomma(len(df_multi.customer_id.value_counts()))}")
+print_freq(df_multi, "M","MAU_2", 2)
+print_freq(df_multi, "M", "MAU", 5)
+print_freq(df_multi, "W", "WAU", 20)
+print_freq(df_multi, "D", "DAU", 140)
+
+
+#%%
+t.T.sum().sort_values(ascending=False)
+
+#%%
+
+
+#%%
 
 # %%
 customer_by_count = df.customer_id.value_counts()
@@ -224,61 +271,3 @@ count_hourly
 
 # %%
 # pd.pivot_table?
-
-
-# %%
-df_hc
-# %%
-# df_hc.pivot_table([cid]).count()
-# df_hc.pivot_table(cid,aggfunc='count')
-freq = "M"
-cid_by_date = df["2019":].pivot_table(
-    values="datetime",
-    index=["customer_id"],
-    columns=pd.Grouper(freq=freq),
-    aggfunc="count",
-)
-cid_sorted_by_sum = cid_by_date.T.sum().sort_values(ascending=False).index
-# cid_by_date = cid_by_date.sort_values("customer_id")
-cid_by_date.T[cid_sorted_by_sum[100:110]].plot()
-# cid_by_date.T.count().sort_values()
-# df_hc.pivot_table(index=["customer_id"], columns=pd.Grouper(freq=freq), aggfunc="count")[ "customer_id" ].T.plot(title=f"customer {irange} by freq={freq}", figsize=(12, 8))
-
-
-#%%
-def cid_by_freq(df, freq):
-    return df["2019":].pivot_table(
-        values="datetime",
-        index=["customer_id"],
-        columns=pd.Grouper(freq=freq),
-        aggfunc="any",
-    )
-
-
-# t = cid_by_freq(df, "M")
-
-
-#%%
-# cid_by_date.T.sum().sort_values(ascending=False)
-def print_freq(df, freq, cuteName, minUsage):
-    # minUsage should be inferred
-    c = cid_by_freq(df, freq).T.sum()
-    print(f"{cuteName}:{intcomma(len(c[c >= minUsage ]))}")
-
-
-# NOTE: Could speed up significantly by removing
-# Single time users
-df_multi = df_w_multi_customers(df)
-print(f"N:{intcomma(len(cid_by_date.index))}")
-print(f"N returning:{intcomma(len(df_multi.customer_id.value_counts()))}")
-print_freq(df_multi, "M", "MAU_2", 2)
-print_freq(df_multi, "M", "MAU", 5)
-print_freq(df_multi, "W", "WAU", 20)
-print_freq(df_multi, "D", "DAU", 140)
-
-
-#%%
-t.T.sum().sort_values(ascending=False)
-a
-
-#%%
