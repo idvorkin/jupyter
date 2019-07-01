@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.1.7-rc0
+#       jupytext_version: 1.1.7
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -53,6 +53,8 @@ import dask
 import dask.dataframe as dd
 from IPython.display import display
 
+from humanize import intcomma, intword
+
 
 # %%
 # make the plot wider
@@ -64,9 +66,9 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
 # %%
 # Export Data from healthkit using [qs-access](https://itunes.apple.com/us/app/qs-access/id920297614?mt=8) app
-# raw_csv= "/home/idvorkin/data/wamd.all.csv"
-raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
-cleaned_df_pickled = f"{raw_csv}.pickle"
+raw_csv = "~/data/igor.all.csv"
+# raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
+cleaned_df_pickled = f"{raw_csv}.pickle.gz"
 
 
 # Load+Clean+Explore data using Dask as it's got multi-core.
@@ -74,18 +76,21 @@ cleaned_df_pickled = f"{raw_csv}.pickle"
 # df = dd.read_csv(raw_csv,sep='\t' )
 # df = df.compute()
 # df = pd.read_csv(raw_csv,sep='\t')
-df = pd.read_csv(raw_csv, sep="|", lineterminator="\n")
+# df = pd.read_csv(raw_csv, sep="|", lineterminator="\n")
+df = pd.read_csv(raw_csv, sep="\t")
 
 
 # %%
 # clean up some  data
 
 # setup date column
-df["datetime"] = pd.to_datetime(df.date_uct, errors="coerce")
+datetimeColumnName = "datetime_name"
+customerIdColumnName = "customer_id_name"
+df["datetime"] = pd.to_datetime(df[datetimeColumnName], errors="coerce")
 df = df.set_index(df.datetime)
 
 # setup customer id
-df["customer_id"] = df.id
+df["customer_id"] = df.customerIdColumnName
 
 # %%
 # df = df.compute()
@@ -142,19 +147,19 @@ count_hourly.iloc[:, 0].plot(title="Interactions over time")
 # %%
 def plot_distribution_for(df, columns, minimum_call_count=0):
     cid = "customer_id"
-    original_customer_by_count = df[cid].value_counts()
-    cid_to_exclude = original_customer_by_count[
-        original_customer_by_count.values <= minimum_call_count
+    usage_by_cid = df[cid].value_counts()
+    cid_to_exclude = usage_by_cid[
+        usage_by_cid.values <= minimum_call_count
     ].index.values
     df = df[~df.customer_id.isin(cid_to_exclude)]
-    customer_by_count = df[cid].value_counts()
+    usage_by_cid = df[cid].value_counts()
     dfT = (
-        customer_by_count.value_counts(normalize=True)
+        usage_by_cid.value_counts(normalize=True)
         .apply(lambda d: d * 100)
         .iloc[:columns]
     )
     dfT.index.name = f"% usages by customer"
-    N = len(customer_by_count.value_counts())
+    N = len(usage_by_cid.value_counts())
     graphed = int(dfT.sum())
     title = "What % of time do customers call K times? "
     sub_title = f"Universe customers calling >= {minimum_call_count} times, N={humanize.intcomma(N)}, Visible={graphed}%"
@@ -162,6 +167,15 @@ def plot_distribution_for(df, columns, minimum_call_count=0):
     ax.set_ylabel(f"% customers")
     plt.show()  # force the plot ot show
 
+
+# create a df w/only multi users for faster analysis
+def df_w_multi_customers(df):
+    usage_by_cid = df.customer_id.value_counts()
+    cid_to_exclude = usage_by_cid[usage_by_cid.values == 1].index.values
+    return df[~df.customer_id.isin(cid_to_exclude)]
+
+
+df_multi = df_w_multi_customers(df)
 
 plot_distribution_for(df, 3, 0)
 plot_distribution_for(df, 10, 3)
@@ -187,7 +201,7 @@ print(f"customer_by_count\n{customer_by_count.head(10)}")
 # customer_by_count =  customer_by_count
 # df.obf_customer_id.value_counts().head(20)
 start_range = 0
-irange = range(start_range, start_range + 10)
+irange = range(start_range, start_range + 100)
 print(f"customer_in_range\n{customer_by_count.iloc[irange]}")
 
 df_hc = df[df.customer_id.isin(customer_by_count.index[irange].values)]
@@ -218,7 +232,7 @@ df_hc
 # df_hc.pivot_table([cid]).count()
 # df_hc.pivot_table(cid,aggfunc='count')
 freq = "M"
-cid_by_date = df_hc["2019":].pivot_table(
+cid_by_date = df["2019":].pivot_table(
     values="datetime",
     index=["customer_id"],
     columns=pd.Grouper(freq=freq),
@@ -226,10 +240,45 @@ cid_by_date = df_hc["2019":].pivot_table(
 )
 cid_sorted_by_sum = cid_by_date.T.sum().sort_values(ascending=False).index
 # cid_by_date = cid_by_date.sort_values("customer_id")
-cid_by_date.T[cid_sorted_by_sum[:4]].plot()
+cid_by_date.T[cid_sorted_by_sum[100:110]].plot()
 # cid_by_date.T.count().sort_values()
 # df_hc.pivot_table(index=["customer_id"], columns=pd.Grouper(freq=freq), aggfunc="count")[ "customer_id" ].T.plot(title=f"customer {irange} by freq={freq}", figsize=(12, 8))
 
 
-# %%
-# %%
+#%%
+def cid_by_freq(df, freq):
+    return df["2019":].pivot_table(
+        values="datetime",
+        index=["customer_id"],
+        columns=pd.Grouper(freq=freq),
+        aggfunc="any",
+    )
+
+
+# t = cid_by_freq(df, "M")
+
+
+#%%
+# cid_by_date.T.sum().sort_values(ascending=False)
+def print_freq(df, freq, cuteName, minUsage):
+    # minUsage should be inferred
+    c = cid_by_freq(df, freq).T.sum()
+    print(f"{cuteName}:{intcomma(len(c[c >= minUsage ]))}")
+
+
+# NOTE: Could speed up significantly by removing
+# Single time users
+df_multi = df_w_multi_customers(df)
+print(f"N:{intcomma(len(cid_by_date.index))}")
+print(f"N returning:{intcomma(len(df_multi.customer_id.value_counts()))}")
+print_freq(df_multi, "M", "MAU_2", 2)
+print_freq(df_multi, "M", "MAU", 5)
+print_freq(df_multi, "W", "WAU", 20)
+print_freq(df_multi, "D", "DAU", 140)
+
+
+#%%
+t.T.sum().sort_values(ascending=False)
+a
+
+#%%
