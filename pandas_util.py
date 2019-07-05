@@ -29,6 +29,7 @@ from humanize import intcomma, intword
 import pandas_profiling
 from functools import partial
 from arrow import now
+import arrow
 
 
 def toPercentNP(x):
@@ -49,7 +50,7 @@ pd.core.series.Series.toPercent = toPercentForMonkeyPatch
 @dataclass
 class Measure_Helper:
     message: str
-    start_time: arrow.arrow.Arrow
+    start_time: arrow.Arrow
 
     def stop(self):
         print(f"-- [{(now() - self.start_time).seconds}s]: {self.message}")

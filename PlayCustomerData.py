@@ -38,7 +38,7 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 # import glob
-# import os
+import os
 from pathlib import Path
 
 # get nltk and corpus
@@ -74,9 +74,9 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 # # Load Data set
 
 # %%
-#raw_csv = "~/data/wamd.all.csv"
-raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
-cleaned_df_pickled = f"{raw_csv}.pickle.gz"
+raw_csv = "~/data/wamd.all.csv"
+# raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
+cleaned_df_pickled = f"{os.path.expanduser(raw_csv)}.pickle.gz"
 
 
 # Load+Clean+Explore data using Dask as it's got multi-core.
@@ -156,9 +156,9 @@ print("--Flat distribution--")
 # df = df.reset_index(drop = True)
 profile_filename = "output.html"
 ti = time_it(f"profiling dataframe to {profile_filename}")
-#pr = df.reset_index(drop=True).profile_report()
-#pr.to_file(output_file=profile_filename)
-#pr
+# pr = df.reset_index(drop=True).profile_report()
+# pr.to_file(output_file=profile_filename)
+# pr
 ti.stop()
 
 # %% [markdown]
