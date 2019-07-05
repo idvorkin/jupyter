@@ -36,7 +36,6 @@ Use From the command line:
 
 ## Vim usage
 
-- Install from [here](https://github.com/lambdalisue/jupyter-vim-binding)
 - Useful Keyboard shortcuts
   - Tab to tab-complete
   - C-G to see tool tips
@@ -46,16 +45,6 @@ Use From the command line:
 - i -> insert mode in cell
 - O -> Create cell above
 - o -> create cell below
-
-Temporary Install of Vim plugin
-
-    %%javascript
-    Jupyter.utils.load_extensions('vim_binding/vim_binding');p
-
-## Install/Setup
-
-- Install via Anaconda
-- Run in anaconda window: Jupyter notebook
 
 Use ssh to expose a remote server to localhost using ssh
 
@@ -71,3 +60,6 @@ Resize Jupyter to window width
     # Make matlab drawings wider
     height_in_inches=8
     mpl.rc("figure", figsize=(2*height_in_inches,height_in_inches))
+
+Useful incantations
+    * Igor's [Pandas Tips](https://github.com/idvorkin/techdiary/blob/master/notes/pandas-tutorial.md)
