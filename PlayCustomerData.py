@@ -28,32 +28,41 @@ import matplotlib as mpl
 """
 
 from typing import List, Tuple
-from dataclasses import dataclass
+
+# from dataclasses import dataclass
 import pandas as pd
+
+# import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib
 
-import glob
-import os
+# import glob
+# import os
 from pathlib import Path
 
 # get nltk and corpus
-import nltk
-from nltk.corpus import stopwords
+# import nltk
+# from nltk.corpus import stopwords
 
 # get scapy and corpus
-import spacy
-import time
-from functools import lru_cache
+# import spacy
+# import time
+# from functools import lru_cache
 import seaborn as sns
 import humanize
-import swifter
+
+# import swifter
 import dask
 import dask.dataframe as dd
 from IPython.display import display
 
 from humanize import intcomma, intword
+import pandas_profiling
+import arrow
+import datetime
+from functools import partial
+from pandas_util import time_it
 
 
 # %%
@@ -65,9 +74,8 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 # # Load Data set
 
 # %%
-# Export Data from healthkit using [qs-access](https://itunes.apple.com/us/app/qs-access/id920297614?mt=8) app
-# raw_csv = "~/data/wamd.all.csv"
-raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
+raw_csv = "~/data/wamd.all.csv"
+# raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
 cleaned_df_pickled = f"{raw_csv}.pickle.gz"
 
 
@@ -89,28 +97,38 @@ datetimeColumnName, customerIdColumnName = "date_uct", "id"
 # setup date column
 df["datetime"] = pd.to_datetime(df[datetimeColumnName], errors="coerce")
 df = df.set_index(df.datetime)
-
 # setup customer id
 df["customer_id"] = df[customerIdColumnName]
 
 # %%
 # df = df.compute()
 # df.to_pickle(cleaned_df_pickled)
+ti = time_it(f"Load dataframe:{cleaned_df_pickled}")
 df = pd.read_pickle(cleaned_df_pickled)
+ti.stop()
+
+# %%
+# df = df.compute()
+# df.to_pickle(cleaned_df_pickled)
+# %%
+# df = df.compute()
+# df.to_pickle(cleaned_df_pickled)
+# df.set_index
+# df = df.reset_index(drop=True)
+# kdf.index
 
 # %% [markdown]
-# # Data Analysis
+# # Data Analysis -
+# ### Home Grown
 
 # %%
 # gotta be a more elegant way, but doing this for now
-distribs = [
-    df[c].value_counts(normalize=True).apply(lambda d: d * 100) for c in df.columns
-]
 
+ti = time_it("compute distribution")
+distribs = [df[c].value_counts(normalize=True).toPercent() for c in df.columns]
+ti.stop()
 
 # %%
-
-
 def isFlatDistribution(d):
     return len(d) == 0 or d.iloc[0] < 0.01
 
@@ -127,15 +145,24 @@ for d in sorted([d for d in distribs if isFlatDistribution(d)], key=lambda d: d.
     c = d.name
     print(c)
 print("--Flat distribution--")
-df.hist()
 
+# %% [markdown]
+# # Data Analysis -
+# ### Like the grown ups do.
+
+# %%
+# This looks pretty crappy on a black background, maybe change color first
+# Also, I've had trouble with date indexes, might need to drop the index
+# df = df.reset_index(drop = True)
+# pr = df.profile_report()
+# pr.to_file(output_file="output.html")
+# pr
 
 # %% [markdown]
 # # Time series analysis
 
 # %%
-# Any time series data interesting beyond count()? Perhaps purchaces?
-# df.offer_accepted_flg, df.offer_asin_cnt, has_purchase_flg,device_family, device_type_id
+# Any time series data interesting beyond count(), perhaps figure out pivots?
 # https://www.dataquest.io/blog/tutorial-time-series-analysis-with-pandas/
 sns.set(rc={"figure.figsize": (11, 4)})
 count_hourly = df.resample("M").count()
@@ -146,7 +173,7 @@ count_hourly.iloc[:, 0].plot(title="Interactions over time")
 # # Customer Distribution Analysis
 
 # %%
-def plot_distribution_for(df, columns, minimum_call_count=0):
+def plot_distribution_for(df, count_buckets, minimum_call_count=0):
     cid = "customer_id"
     usage_by_cid = df[cid].value_counts()
     cid_to_exclude = usage_by_cid[
@@ -154,11 +181,7 @@ def plot_distribution_for(df, columns, minimum_call_count=0):
     ].index.values
     df = df[~df.customer_id.isin(cid_to_exclude)]
     usage_by_cid = df[cid].value_counts()
-    dfT = (
-        usage_by_cid.value_counts(normalize=True)
-        .apply(lambda d: d * 100)
-        .iloc[:columns]
-    )
+    dfT = usage_by_cid.value_counts(normalize=True).toPercent().iloc[:count_buckets]
     dfT.index.name = f"% usages by customer"
     N = len(usage_by_cid.value_counts())
     graphed = int(dfT.sum())
@@ -178,10 +201,12 @@ def df_w_multi_customers(df):
 
 df_multi = df_w_multi_customers(df)
 
+ti = time_it("Plotting distributions")
 plot_distribution_for(df, 3, 0)
 plot_distribution_for(df, 10, 3)
 plot_distribution_for(df, 10, 10)
 plot_distribution_for(df, 10, 500)
+ti.stop()
 
 # %% [markdown]
 # # MAU/WAU/DAU analysis
@@ -219,7 +244,7 @@ def cid_by_freq(df, freq):
 # cid_by_date.T.sum().sort_values(ascending=False)
 def print_freq(df, freq, cuteName, minUsage):
     # minUsage should be inferred
-    c = cid_by_freq(df, freq).T.sum()
+    c = cid_by_freq(df, freq).sum(axis="columns")
     print(f"{cuteName}:{intcomma(len(c[c >= minUsage ]))}")
 
 
@@ -228,7 +253,7 @@ def print_freq(df, freq, cuteName, minUsage):
 df_multi = df_w_multi_customers(df)
 print(f"N:{intcomma(len(df.customer_id.value_counts()))}")
 print(f"N(>1):{intcomma(len(df_multi.customer_id.value_counts()))}")
-print_freq(df_multi, "M","MAU_2", 2)
+print_freq(df_multi, "M", "MAU_2", 2)
 print_freq(df_multi, "M", "MAU", 5)
 print_freq(df_multi, "W", "WAU", 20)
 print_freq(df_multi, "D", "DAU", 140)
