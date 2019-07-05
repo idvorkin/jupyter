@@ -1,5 +1,5 @@
 from typing import List, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pandas as pd
 import numpy as np
 
@@ -48,8 +48,8 @@ pd.core.series.Series.toPercent = toPercentForMonkeyPatch
 
 @dataclass
 class Measure_Helper:
-    start_time = now()
     message: str
+    start_time: arrow.arrow.Arrow
 
     def stop(self):
         print(f"-- [{(now() - self.start_time).seconds}s]: {self.message}")
@@ -57,7 +57,7 @@ class Measure_Helper:
 
 def time_it(message):
     print(f"++ {message}")
-    return Measure_Helper(message)
+    return Measure_Helper(message, now())
 
 
 print("pandas util 0.02")

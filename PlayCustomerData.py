@@ -74,8 +74,8 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 # # Load Data set
 
 # %%
-raw_csv = "~/data/wamd.all.csv"
-# raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
+#raw_csv = "~/data/wamd.all.csv"
+raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
 cleaned_df_pickled = f"{raw_csv}.pickle.gz"
 
 
@@ -154,9 +154,12 @@ print("--Flat distribution--")
 # This looks pretty crappy on a black background, maybe change color first
 # Also, I've had trouble with date indexes, might need to drop the index
 # df = df.reset_index(drop = True)
-# pr = df.profile_report()
-# pr.to_file(output_file="output.html")
-# pr
+profile_filename = "output.html"
+ti = time_it(f"profiling dataframe to {profile_filename}")
+#pr = df.reset_index(drop=True).profile_report()
+#pr.to_file(output_file=profile_filename)
+#pr
+ti.stop()
 
 # %% [markdown]
 # # Time series analysis
