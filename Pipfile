@@ -18,7 +18,7 @@ name = "pypi"
 arrow  =  "*"
 ipython = "*"
 jupyter = "*"
-jupyterlab  = "*"
+jupyterlab  = "==0.35.6"  # Pin jupyter lab till vim is compatible.
 matplotlib  =  "*"
 nbdime = "*"
 numpy  = "*"
