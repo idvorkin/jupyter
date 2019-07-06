@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.1.7
+#       jupytext_version: 1.2.0-rc1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -74,8 +74,8 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 # # Load Data set
 
 # %%
-raw_csv = "~/data/wamd.all.csv"
-# raw_csv = "/Users/idvorkin/imessage/all.messages.csv"
+#raw_csv = "~/data/wamd.all.csv"
+raw_csv = "~/data/all.messages.csv"
 cleaned_df_pickled = f"{os.path.expanduser(raw_csv)}.pickle.gz"
 
 
@@ -84,8 +84,8 @@ cleaned_df_pickled = f"{os.path.expanduser(raw_csv)}.pickle.gz"
 # df = dd.read_csv(raw_csv,sep='\t' )
 # df = df.compute()
 # df = pd.read_csv(raw_csv,sep='\t')
-# df = pd.read_csv(raw_csv, sep="|", lineterminator="\n")
-# df = pd.read_csv(raw_csv, sep="\t")
+# df = pd.read_csv(raw_csv, sep="|", lineterminator="\n", error_bad_lines=False)
+# df = pd.read_csv(raw_csv, sep="\t", lineterminator='\r"')
 df
 
 
@@ -102,7 +102,7 @@ df["customer_id"] = df[customerIdColumnName]
 
 # %%
 # df = df.compute()
-# df.to_pickle(cleaned_df_pickled)
+#df.to_pickle(cleaned_df_pickled)
 ti = time_it(f"Load dataframe:{cleaned_df_pickled}")
 df = pd.read_pickle(cleaned_df_pickled)
 ti.stop()
@@ -155,21 +155,11 @@ print("--Flat distribution--")
 # Also, I've had trouble with date indexes, might need to drop the index
 # df = df.reset_index(drop = True)
 profile_filename = "output.html"
-ti = time_it(f"profiling dataframe to {profile_filename}")
-# pr = df.reset_index(drop=True).profile_report()
-# pr.to_file(output_file=profile_filename)
-# pr
+#ti = time_it(f"profiling dataframe to {profile_filename}")
+#pr = df.reset_index(drop=True).profile_report()
+#pr.to_file(output_file=profile_filename)
+#pr
 ti.stop()
-
-# %% [markdown]
-# # Time series analysis
-
-# %%
-# Any time series data interesting beyond count(), perhaps figure out pivots?
-# https://www.dataquest.io/blog/tutorial-time-series-analysis-with-pandas/
-sns.set(rc={"figure.figsize": (11, 4)})
-count_hourly = df.resample("M").count()
-count_hourly.iloc[:, 0].plot(title="Interactions over time")
 
 
 # %% [markdown]
@@ -230,7 +220,7 @@ cid_by_date = df["2019":].pivot_table(
 # df_hc.pivot_table(index=["customer_id"], columns=pd.Grouper(freq=freq), aggfunc="count")[ "customer_id" ].T.plot(title=f"customer {irange} by freq={freq}", figsize=(12, 8))
 
 
-#%%
+# %%
 def cid_by_freq(df, freq):
     return df["2019":].pivot_table(
         values="datetime",
@@ -240,10 +230,8 @@ def cid_by_freq(df, freq):
     )
 
 
-# t = cid_by_freq(df, "M")
 
-
-#%%
+# %%
 # cid_by_date.T.sum().sort_values(ascending=False)
 def print_freq(df, freq, cuteName, minUsage):
     # minUsage should be inferred
@@ -262,40 +250,30 @@ print_freq(df_multi, "W", "WAU", 20)
 print_freq(df_multi, "D", "DAU", 140)
 
 
-#%%
-t.T.sum().sort_values(ascending=False)
-
-#%%
-
-
-#%%
+# %% [markdown]
+# # Time Series Analysis
 
 # %%
-customer_by_count = df.customer_id.value_counts()
+df.resample("M").count()["datetime"].plot(title="Total usage over time")
+plt.show()
+
+df_tr = df["2019"]
+customer_by_count = df_tr.customer_id.value_counts()
+irange = range(0,5)
+df_hc = df_tr[df_tr.customer_id.isin(customer_by_count.index[irange].values)]
+
+top_customer_by_month =  df_hc.pivot_table(
+        values="datetime",
+        index=["customer_id"],
+        columns=pd.Grouper(freq="M"),
+        aggfunc="count",
+    fill_value=0
+        ).T
+
+for kind in "line area bar".split():
+    top_customer_by_month.plot(title="Top customers usage over time", kind=kind)
+    plt.show()
 print(f"customer_by_count\n{customer_by_count.head(10)}")
-# customer_by_count =  customer_by_count
-# df.obf_customer_id.value_counts().head(20)
-start_range = 0
-irange = range(start_range, start_range + 100)
-print(f"customer_in_range\n{customer_by_count.iloc[irange]}")
-
-df_hc = df[df.customer_id.isin(customer_by_count.index[irange].values)]
-# count_hourly = df_hc.customer_id.resample("W").count()
-# count_hourly = df_hc['2019-01':'2019-05'][["customer_id"]].groupby("customer_id").resample('D').count()
-count_hourly
-# count_hourly.plot()
-
-## TODO: Head customer behavior
-## TODO Middle
-## TODO: Tail removal
-
-## Look at head vs tail
-
-# See step functions Called O-10
-# Top 10 customers,
-# trange = range(0, 3)
-# customer_by_count.value_counts(normalize=True).apply(lambda d:d).iloc[trange] # .plot(kind='pie', title=f'% customer {trange}')
 
 
 # %%
-# pd.pivot_table?
