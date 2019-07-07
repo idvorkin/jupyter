@@ -155,7 +155,7 @@ print("--Flat distribution--")
 # Also, I've had trouble with date indexes, might need to drop the index
 # df = df.reset_index(drop = True)
 profile_filename = "output.html"
-#ti = time_it(f"profiling dataframe to {profile_filename}")
+ti = time_it(f"profiling dataframe to {profile_filename}")
 #pr = df.reset_index(drop=True).profile_report()
 #pr.to_file(output_file=profile_filename)
 #pr
