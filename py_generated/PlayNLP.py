@@ -6,16 +6,12 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.4'
-#       jupytext_version: 1.1.3
+#       jupytext_version: 1.2.0-rc1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
-
-# # Play with NLP
-# * https://spacy.io/
-# * https://www.nltk.org/
 
 # +
 """
@@ -44,6 +40,18 @@ from nltk.corpus import stopwords
 import spacy
 import time
 from functools import lru_cache
+from pandas_util import time_it
+from matplotlib import animation, rc
+from IPython.display import HTML
+from datetime import timedelta
+import itertools
+# -
+
+
+# # Perform NLP analysis on Igor's Journal Entries
+# * https://spacy.io/
+# * https://www.nltk.org/
+
 
 
 # +
@@ -56,7 +64,7 @@ nltk.download("stopwords")
 # Should be factored out
 domain_stop_words = set(
     """
-    yes yup Affirmations get that's
+    yes yup Affirmations get that's Journal
     Deliberate Disciplined Daily
     Know Essential Provide Context
     First Understand Appreciate
@@ -87,7 +95,7 @@ class Corpus:
         return self.path.__hash__()
 
 
-@lru_cache(maxsize=10)
+@lru_cache(maxsize=100)
 def LoadCorpus(corpus_path: str) -> Corpus:
 
     # Hym consider memoizing this asweel..
@@ -119,6 +127,45 @@ def LoadCorpus(corpus_path: str) -> Corpus:
     list_file_content = [Path(file_name).read_text() for file_name in corpus_files]
     all_file_content = " ".join(list_file_content)
 
+    # NOTE I can Upper case Magic to make it a proper noun and see how it ranks!
+
+    properNouns = "zach ammon Tori amelia josh Ray javier Neha Amazon John".split()
+
+    def capitalizeProperNouns(s: str):
+        for noun in properNouns:
+            noun = noun.lower()
+            properNoun = noun[0].upper() + noun[1:]
+            s = s.replace(" " + noun, " " + properNoun)
+        return s
+
+    # Grr- Typo replacer needs to be lexically smart - sigh
+    typos = [
+        ("waht", "what"),
+        ('I"ll', "I'll"),
+        ("that", "that"),
+        ("taht", "that"),
+        ("ti ", " it "),
+        ("that'sa", "that's a"),
+        ("Undersatnd", "Understand"),
+        ("Ill", "I'll"),
+        ("Noitce", "Notice"),
+        ("Whcih", "Which"),
+        ("K ", "OK "),
+        ("sTories", "stories"),
+        ("htat", "that"),
+        ("Getitng", "Getting"),
+        ("Essenital", "Essential"),
+        ("whcih", "which"),
+    ]
+
+    def fixTypos(s: str):
+        for typo in typos:
+            s = s.replace(" " + typo[0], " " + typo[1])
+        return s
+
+    all_file_content = fixTypos(all_file_content)
+    all_file_content = capitalizeProperNouns(all_file_content)
+
     # Clean out some punctuation (although does that mess up stemming later??)
     initial_words = all_file_content.replace(",", " ").replace(".", " ").split()
 
@@ -131,43 +178,95 @@ def LoadCorpus(corpus_path: str) -> Corpus:
     )
 
 
-@lru_cache(maxsize=10)
+@lru_cache(maxsize=100)
 def DocForCorpus(nlp, corpus: Corpus):
     print(
         f"initial words {len(corpus.initial_words)} remaining words {len(corpus.words)}"
     )
-    print(f"Building corpus from {corpus.path} of len:{len(corpus.all_content)} ")
-    start_time = time.time()
+    ti = time_it(
+        f"Building corpus from {corpus.path} of len:{len(corpus.all_content)} "
+    )
     # We use all_file_content not initial_words because we want to keep punctuation.
     doc_all = nlp(corpus.all_content)
-    duration = time.time() - start_time
 
     # Remove domain specific stop words.
     doc = [token for token in doc_all if token.text.lower() not in domain_stop_words]
-    print(f"Took: {int(duration)}")
+    ti.stop()
+
     return doc
-
-
 # -
 
-# make the plot wider
-height_in_inches = 4
-matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
-# ### Load corpus from my journal
+# # Build corpus from my journal in igor2/750words
 
 # +
-corpus_path = "~/gits/igor2/750words/2018*md"
-# corpus_path = "/mnt/c/Users/idvor/OneDrive/backup/Diary/*txt"
+# make function path for y/m
 
-corpus = LoadCorpus(corpus_path)
+
+def glob750(year, month):
+    assert month in range(1, 13)
+    base750 = "~/gits/igor2/750words/"
+    return f"{base750}/{year}-{month:02}-*.md"
+
+
+def glob750archive(year, month):
+    assert month in range(1, 13)
+    base750archive = "~/gits/igor2/750words_archive/"
+    return f"{base750archive}/750 Words-export-{year}-{month:02}-01.txt"
+
+
+def corpus_paths_months_for_year(year):
+    return [glob750archive(year, month) for month in range(1, 13)]
+
+
+# Use normal method for 2012-2017
+corpus_path_months = {
+    year: corpus_paths_months_for_year(year) for year in range(2012, 2018)
+}
+
+# 2018 Changes from archive to markdown.
+# 2018 Jan/Feb/October don't have enough data for analysis
+corpus_path_months[2018] = [glob750archive(2018, month) for month in range(3, 8)] + [
+    glob750(2018, month) for month in (9, 11, 12)
+]
+
+corpus_path_months[2019] = [glob750(2019, month) for month in range(1, 7)]
+
+corpus_path_months_trailing = [
+    glob750(2018, month) for month in (9, 11, 12)
+] + corpus_path_months[2019]
+
+corpus_path_years = [
+    "~/gits/igor2/750words_archive/*2012*txt",
+    "~/gits/igor2/750words_archive/*2013*txt",
+    "~/gits/igor2/750words_archive/*2014*txt",
+    "~/gits/igor2/750words_archive/*2015*txt",
+    "~/gits/igor2/750words_archive/*2016*txt",
+    "~/gits/igor2/750words_archive/*2017*txt",
+    "~/gits/igor2/750words_archive/*2018*txt",
+    "~/gits/igor2/750words/2018*md",
+    "~/gits/igor2/750words/2019-*md",
+]
+
+# TODO: Add a pass to remove things with insufficient words.
+# -
+
+
+# make the plot wider
+height_in_inches = 8
+matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
+
+# ### Load simple corpus for my journal
+
+corpus = LoadCorpus(corpus_path_months[2019][0])
 print(f"initial words {len(corpus.initial_words)} remaining words {len(corpus.words)}")
 
 
 # +
-# Could use nltk frequency distribution, but better off building our own.
+# Could use nltk frequency distribution plot, but better off building our own.
 # fd = nltk.FreqDist(words)
 # fd.plot(50, percents=True)
+# Can also use scikit learn CountVectorizor
 
 # +
 # Same as NLTK FreqDist, except normalized, includes cumsum, and colors
@@ -238,38 +337,42 @@ nlp = get_nlp_model("en_core_web_lg")
 nlp.max_length = 100 * 1000 * 1000
 
 
-def GraphPoSForDoc(pos: str, doc, corpus: Corpus):
+def GetInterestingWords(pos: str, doc, corpus: Corpus):
     interesting_pos = pos
     interesting_pos_set = set(interesting_pos.split())
     interesting = [token for token in doc if token.pos_ in interesting_pos_set]
     interesting_words = [token.lemma_ for token in interesting]
+    return interesting_words
 
+
+def GraphPoSForDoc(pos: str, doc, corpus):
     GraphWordDistribution(
-        interesting_words,
-        title=f"Distribution of {interesting_pos} on {corpus.path}",
+        GetInterestingWords(pos, doc, corpus=corpus),
+        title=f"Distribution of {pos} on {corpus.path}",
         skip=0,
         length=20,
     )
 
 
 def GraphScratchForCorpus(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"):
-    nlp = get_nlp_model("en_core_web_lg")
     corpus = LoadCorpus(corpus_path)
     doc = DocForCorpus(nlp, corpus)
     GraphPoSForDoc(pos, doc, corpus)
 
 
-# +
-corpus_paths = [
-    "~/gits/igor2/750words/2019*md",
-    "~/gits/igor2/750words/2018*md",
-    "/mnt/c/Users/idvor/OneDrive/backup/Diary/*2012*txt",
-    "/mnt/c/Users/idvor/OneDrive/backup/Diary/*2011*txt",
-]
+def GetInterestingForCorpusPath(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"):
+    corpus = LoadCorpus(corpus_path)
+    doc = DocForCorpus(nlp, corpus)
+    return GetInterestingWords(pos, doc, corpus)
 
-for c in corpus_paths:
-    GraphScratchForCorpus(c, pos="NOUN")
+
 # -
+
+# corpus_paths = corpus_paths_years
+corpus_paths = corpus_path_months[2016]
+print(corpus_paths)
+for c in corpus_paths:
+    GraphScratchForCorpus(c, pos="PROPN")
 
 # # Debugging when stuff goes goofy.
 
@@ -286,5 +389,107 @@ GraphWordDistribution([token.pos_ for token in doc], title=f"POS Distribution on
 """
 
 
+# ### Visualizing the "Thought Distribution" over time.
+# * A] Sentiment over time. Graph valence as line graph time series
+#     (TBD: Use cloud service to analyze each file)
+#
+# * B] Graph a bar chart of Proper noun trending over time, have it update per corpus file.
+#  * Build a data frame of word frequency "Proper Noun"x"Corpus"
+#  * Graph update every second.
+
+# +
+def MakePDF(words, name):
+    def ToPercent(x: float) -> float:
+        return x * 100
+
+    return pd.Series(words, name=name).value_counts(normalize=True).apply(ToPercent)
 
 
+def PathToFriendlyTitle(path: str):
+    path = path.split("/")[-1]
+    if "export-" in path:
+        return path.split("export-")[-1]
+    else:
+        return path
+
+
+# +
+# corpus_paths = corpus_path_months[2018]+corpus_path_months[2019]
+corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
+pdfs = [
+    MakePDF(GetInterestingForCorpusPath(p, "PROPN"), PathToFriendlyTitle(p))
+    for p in corpus_paths
+]
+
+# TODO: Why can't we use the join - gives an error.
+# wordByTimespan = pd.DataFrame().join(pdfs, how="outer", sort=False)
+wordByTimespan = pd.DataFrame()
+for pdf in pdfs:
+    wordByTimespan = wordByTimespan.join(pdf, how="outer")
+
+# Sort by sum(word frequency) over all corpus
+# I  suspect it'd be interesting to sort by TF*IDF because it'll make words that are present
+# only in a few months get a boost.
+wordByTimespan["word_frequency"] = wordByTimespan.sum(skipna=True, axis="columns")
+wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
+
+# Remove total column
+wordByTimespan = wordByTimespan.iloc[:, :-1]
+
+# wordByTimespan.iloc[:50, :].plot( kind="bar", subplots=False, legend=False, figsize=(15, 14), sharey=True )
+wordByTimespan.iloc[:8, :].T.plot(
+    kind="bar", subplots=True, legend=False, figsize=(15, 9), sharey=True
+)
+# wordByTimespan.iloc[:13, :].T.plot( kind="bar", subplots=False, legend=True, figsize=(15, 14), sharey=True )
+
+# +
+top_word_by_year = wordByTimespan.iloc[:15, :][
+    ::-1
+]  # the -1 on the end reverse the count
+
+anim_fig_size = (16, 10)
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+ax = top_word_by_year.iloc[:, 0].plot(
+    title=f"Title Over Written", figsize=anim_fig_size, kind="barh"
+)
+
+animation.patches = ax.patches
+loop_colors = itertools.cycle("bgrcmk")
+animation.colors = list(itertools.islice(loop_colors, len(animation.patches)))
+
+
+def animate(i,):
+    # OMG: That was impossible to find!!!
+    # Turns out every time you call plot, more patches (bars) are added to graph.  You need to remove them, which is very non-obvious.
+    # https://stackoverflow.com/questions/49791848/matplotlib-remove-all-patches-from-figure
+    [p.remove() for p in reversed(animation.patches)]
+    top_word_by_year.iloc[:, i].plot(
+        title=f"Distribution {top_word_by_year.columns[i]}",
+        kind="barh",
+        color=animation.colors,
+        xlim=(0, 10),
+    )
+    return (animation.patches,)
+
+
+anim = animation.FuncAnimation(
+    fig,
+    animate,
+    frames=len(top_word_by_year.columns),
+    interval=timedelta(seconds=1).seconds * 1000,
+    blit=False,
+)
+HTML(anim.to_html5_video())
+
+# +
+dmo = """
+corpus_path = "~/gits/igor2/750words/2019-06-*md"
+corpus = LoadCorpus(corpus_path)
+doc = DocForCorpus(nlp, corpus)
+for t in doc[400:600]:
+print(f"{t} {t.lemma_} {t.pos_}")
+"""
+from spacy import displacy
+
+displacy.render(nlp("Igor wonders if Ray is working too much"))

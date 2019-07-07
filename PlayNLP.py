@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.2'
-#       jupytext_version: 1.1.6
+#       jupytext_version: 1.2.0-rc1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -40,12 +40,20 @@ from nltk.corpus import stopwords
 import spacy
 import time
 from functools import lru_cache
+from pandas_util import time_it
+from matplotlib import animation, rc
+from IPython.display import HTML
+from datetime import timedelta
+import itertools 
+
 
 
 # %% [markdown]
 # # Perform NLP analysis on Igor's Journal Entries
 # * https://spacy.io/
 # * https://www.nltk.org/
+
+# %%
 
 # %%
 # This function is in the first block so you don't
@@ -176,15 +184,14 @@ def DocForCorpus(nlp, corpus: Corpus):
     print(
         f"initial words {len(corpus.initial_words)} remaining words {len(corpus.words)}"
     )
-    print(f"Building corpus from {corpus.path} of len:{len(corpus.all_content)} ")
-    start_time = time.time()
+    ti = time_it(f"Building corpus from {corpus.path} of len:{len(corpus.all_content)} ")
     # We use all_file_content not initial_words because we want to keep punctuation.
     doc_all = nlp(corpus.all_content)
-    duration = time.time() - start_time
 
     # Remove domain specific stop words.
     doc = [token for token in doc_all if token.text.lower() not in domain_stop_words]
-    print(f"Took: {int(duration)}")
+    ti.stop()
+    
     return doc
 
 
@@ -412,7 +419,7 @@ def PathToFriendlyTitle(path: str):
 
 # %%
 # corpus_paths = corpus_path_months[2018]+corpus_path_months[2019]
-corpus_paths = corpus_path_months[2018]
+corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
 pdfs = [
     MakePDF(GetInterestingForCorpusPath(p, "PROPN"), PathToFriendlyTitle(p))
     for p in corpus_paths
@@ -440,7 +447,36 @@ wordByTimespan.iloc[:8, :].T.plot(
 # wordByTimespan.iloc[:13, :].T.plot( kind="bar", subplots=False, legend=True, figsize=(15, 14), sharey=True )
 
 # %%
-demo = """
+top_word_by_year = wordByTimespan.iloc[:15,:][::-1] # the -1 on the end reverse the count
+
+anim_fig_size=(16,10)
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+ax = top_word_by_year.iloc[:,0].plot(
+    title=f"Title Over Written", figsize=anim_fig_size,  kind='barh'
+)
+
+animation.patches = ax.patches
+loop_colors = itertools.cycle('bgrcmk')
+animation.colors = list(itertools.islice(loop_colors,len(animation.patches)))
+
+
+def animate(i, ):
+    # OMG: That was impossible to find!!!
+    # Turns out every time you call plot, more patches (bars) are added to graph.  You need to remove them, which is very non-obvious.
+    # https://stackoverflow.com/questions/49791848/matplotlib-remove-all-patches-from-figure
+    [p.remove() for p in reversed(animation.patches)] 
+    top_word_by_year.iloc[:,i].plot(title=f"Distribution {top_word_by_year.columns[i]}", kind='barh', color=animation.colors , xlim=(0,10))
+    return (animation.patches,)
+
+
+anim = animation.FuncAnimation(
+    fig, animate, frames=len(top_word_by_year.columns), interval=timedelta(seconds=1).seconds * 1000, blit=False 
+)
+HTML(anim.to_html5_video())
+
+# %%
+dmo = """
 corpus_path = "~/gits/igor2/750words/2019-06-*md"
 corpus = LoadCorpus(corpus_path)
 doc = DocForCorpus(nlp, corpus)
@@ -450,9 +486,3 @@ print(f"{t} {t.lemma_} {t.pos_}")
 from spacy import displacy
 
 displacy.render(nlp("Igor wonders if Ray is working too much"))
-
-# %%
-a+3+3
-
-
-# %%
