@@ -13,6 +13,12 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# # Explore NLP against my journal entries
+#
+# This notebook allows me to play with NLP concepts using my personal journals. 
+# I've been writing personal journal entries ala 750 words a day for several years. 
+
 # %%
 """
 from sklearn.datasets import fetch_openml
@@ -46,15 +52,6 @@ from IPython.display import HTML
 from datetime import timedelta
 import itertools 
 
-
-
-# %% [markdown]
-# # Perform NLP analysis on Igor's Journal Entries
-# * https://spacy.io/
-# * https://www.nltk.org/
-
-# %%
-
 # %%
 # This function is in the first block so you don't
 # recreate it willy nilly, as it includes a cache.
@@ -69,6 +66,7 @@ domain_stop_words = set(
     Deliberate Disciplined Daily
     Know Essential Provide Context
     First Understand Appreciate
+    Hymn Monday
     """.lower().split()
 )
 
@@ -202,50 +200,55 @@ def DocForCorpus(nlp, corpus: Corpus):
 # make function path for y/m
 
 
-def glob750(year, month):
+# Build up corpus reader.
+# Current design, hard code knowledge of where everything is stored in forwards direction.
+# Hard code insufficient data for analysis.
+# Better model, read all files in paths and then do lookup.
+
+
+
+# Hymn better model: 
+# A - lookup all files. 
+# B - Generate paths based on actual locations.
+
+def glob750_latest(year, month):
     assert month in range(1, 13)
     base750 = "~/gits/igor2/750words/"
     return f"{base750}/{year}-{month:02}-*.md"
 
+def glob750_new_archive(year, month):
+    assert month in range(1, 13)
+    base750 = "~/gits/igor2/750words_new_archive/"
+    return f"{base750}/{year}-{month:02}-*.md"
 
-def glob750archive(year, month):
+
+def glob750_old_archive(year, month):
     assert month in range(1, 13)
     base750archive = "~/gits/igor2/750words_archive/"
     return f"{base750archive}/750 Words-export-{year}-{month:02}-01.txt"
 
 
 def corpus_paths_months_for_year(year):
-    return [glob750archive(year, month) for month in range(1, 13)]
+    return [glob750_old_archive(year, month) for month in range(1, 13)]
 
 
-# Use normal method for 2012-2017
+# Corpus in "old archieve"  from 2012-2017.
 corpus_path_months = {
     year: corpus_paths_months_for_year(year) for year in range(2012, 2018)
 }
 
-# 2018 Changes from archive to markdown.
+# 2018 Changes from old archive to new_archieve.
 # 2018 Jan/Feb/October don't have enough data for analysis
-corpus_path_months[2018] = [glob750archive(2018, month) for month in range(3, 8)] + [
-    glob750(2018, month) for month in (9, 11, 12)
+corpus_path_months[2018] = [glob750_old_archive(2018, month) for month in range(3, 8)] + [
+    glob750_new_archive(2018, month) for month in (9, 11, 12)
 ]
 
-corpus_path_months[2019] = [glob750(2019, month) for month in range(1, 7)]
+corpus_path_months[2019] = [glob750_new_archive(2019, month) for month in range(1, 8)]+ [glob750(2019, month) for month in range(8, 9)]
 
 corpus_path_months_trailing = [
     glob750(2018, month) for month in (9, 11, 12)
 ] + corpus_path_months[2019]
 
-corpus_path_years = [
-    "~/gits/igor2/750words_archive/*2012*txt",
-    "~/gits/igor2/750words_archive/*2013*txt",
-    "~/gits/igor2/750words_archive/*2014*txt",
-    "~/gits/igor2/750words_archive/*2015*txt",
-    "~/gits/igor2/750words_archive/*2016*txt",
-    "~/gits/igor2/750words_archive/*2017*txt",
-    "~/gits/igor2/750words_archive/*2018*txt",
-    "~/gits/igor2/750words/2018*md",
-    "~/gits/igor2/750words/2019-*md",
-]
 
 # TODO: Add a pass to remove things with insufficient words.
 
@@ -420,6 +423,7 @@ def PathToFriendlyTitle(path: str):
 # %%
 # corpus_paths = corpus_path_months[2018]+corpus_path_months[2019]
 corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
+print(corpus_paths)
 pdfs = [
     MakePDF(GetInterestingForCorpusPath(p, "PROPN"), PathToFriendlyTitle(p))
     for p in corpus_paths
@@ -437,11 +441,15 @@ for pdf in pdfs:
 wordByTimespan["word_frequency"] = wordByTimespan.sum(skipna=True, axis="columns")
 wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
 
+
 # Remove total column
 wordByTimespan = wordByTimespan.iloc[:, :-1]
 
+top_words_to_skip,   count_words   = 5, 10
+print (f"skipping:{top_words_to_skip}, count:{count_words} ")
+
 # wordByTimespan.iloc[:50, :].plot( kind="bar", subplots=False, legend=False, figsize=(15, 14), sharey=True )
-wordByTimespan.iloc[:8, :].T.plot(
+wordByTimespan.iloc[top_words_to_skip:top_words_to_skip + count_words, :].T.plot(
     kind="bar", subplots=True, legend=False, figsize=(15, 9), sharey=True
 )
 # wordByTimespan.iloc[:13, :].T.plot( kind="bar", subplots=False, legend=True, figsize=(15, 14), sharey=True )
@@ -486,3 +494,13 @@ print(f"{t} {t.lemma_} {t.pos_}")
 from spacy import displacy
 
 displacy.render(nlp("Igor wonders if Ray is working too much"))
+
+# %%
+corpus_path_months
+
+# %%
+corpus_path_months_trailing
+
+
+
+# %%
