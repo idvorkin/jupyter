@@ -4,6 +4,15 @@
 
 A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/github/idvorkin/jupyter).
 
+## Good plugins
+
+```
+jupyter labextension install @jupyterlab/toc
+jupyter labextension install jupyterlab_vim
+jupyter labextension install jupyterlab-jupytext
+
+```
+
 ## Authoring Tips
 
 - [XKCD style graphs in matplotlib](http://nbviewer.jupyter.org/url/jakevdp.github.io/downloads/notebooks/XKCD_sketch_path.ipynb)
@@ -13,10 +22,6 @@ A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/gi
 V2 of the jupyter shell will be jupyter-lab. They have a seperate VIM plugin:
 https://github.com/jwkvam/jupyterlab_vim
 
-installation is easy:
-
-    jupyter labextension install jupyterlab_vim
-
 ## Jupyter diff tools
 
 [nbdiff](https://github.com/jupyter/nbdime#installation) - Cool tool for graphical diff of notebooks.
@@ -24,10 +29,6 @@ installation is easy:
 ## Jupyter To Python Round Trip ( JupyText)
 
 https://github.com/mwouts/jupytext
-
-Install:
-
-    jupyter labextension install jupyterlab-jupytext
 
 Use From the command line:
 
@@ -61,5 +62,4 @@ Resize Jupyter to window width
     height_in_inches=8
     mpl.rc("figure", figsize=(2*height_in_inches,height_in_inches))
 
-Useful incantations
-    * Igor's [Pandas Tips](https://github.com/idvorkin/techdiary/blob/master/notes/pandas-tutorial.md)
+Useful incantations \* Igor's [Pandas Tips](https://github.com/idvorkin/techdiary/blob/master/notes/pandas-tutorial.md)
