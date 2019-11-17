@@ -5,16 +5,72 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.4'
-#       jupytext_version: 1.1.3
+#       jupytext_version: 1.2.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-print(3 + 4)
+# + {"toc-hr-collapsed": false, "cell_type": "markdown"}
+# # BSTs
+#
+# Notes:
+#
+# - Confirm how they want to do duplicates (inline with tree, or count on node)
+#
+# ### Can't end recursion with just the current knowledge.
+#
+# Recursion where you just return state of final node tends not to be the solution (as it is with trees)
+# This is because you usually want some idea of parent state (see idea of a candidate node) which is easier to do with a while loop with a candidate node and bi-secting search space each time.
+#
+# ### Complexity
+#
+# O(n) if need to visit all
+# O(h) if height of tree
+# O(h) can degrade to o(n) as can always see a BST as an LL
+#
+#
+# ### Approaches:
+#
+# **Abstract out traversal (usually in order)**
+#
+# Differentiate iteration, from conditions. Iteration is an o(n), depending on starting point.
+#
+# **K-largest:** Traverse BST backwards by doing inorder rhs->mid->lhs, stop after K.
+#
+# InOrderBackwards(tree).first(5) # use a generator, take first 5 or none - very tight syntax
+#
+# **Pass valid intervals down:**
+#
+# * IsBST() => InRange(t,min,max)
+#
+# **Keep track of candidate node, while cutting search space in half:**
+#
+# * NextBiggest()
+# * FirstFound()
+#
+# Can use recursion,but a bit easier to read with iteration
+# Note this is the same as operating in a sorted array
+#
+# candidate = None; it = t
+#
+# while (it):
+#  if isFound: return True
+#  if onLeft: it = it.lhs
+#  if onRight: it = it.rhs
+# return False
+#
+# ### Analog to sorted array
+#
+# - You cut candidates in half each time
+# - None/Terminal node => e>s
+# - lhs = (low, mid-1)
+# - rhs = (mid+1, high)
+# - mid == (s+e)//2
+#
 
-
+# +
 class Tree:
     def __init__(self, i, lhs=None, rhs=None):
         self.value = i
@@ -22,7 +78,7 @@ class Tree:
         self.rhs = rhs
 
     def __str__(self):
-        return "[{0}][L:{1}][R:{2}]".format(self.value, self.lhs, self.rhs)
+        return f"[{self.value}], [{self.lhs}], [{self.rhs}]"
 
     def __repr__(self):
         return str(self)
@@ -32,49 +88,51 @@ def printTree(tree, depth=0):
     if not tree:
         return
     printTree(tree.lhs, depth + 1)
-    print("{0}[{1}]".format(" " * depth * 4, tree.value))
+    print(f'{" " * depth * 4}[{tree.value}]')
     printTree(tree.rhs, depth + 1)
 
 
+# -
+
 printTree(None)
-
 printTree(Tree(4))
-
+print("--BST--")
 bst1 = Tree(4, Tree(3), Tree(6, Tree(5), Tree(7)))
 printTree(bst1)
 notbst3 = Tree(4, Tree(3), Tree(6, Tree(9), Tree(7)))
-print("---")
+print("--Not BST--")
 printTree(notbst3)
 
 
-# + {"active": ""}
-#
-# -
 
-def IsBst(tree, last=0):
-    if not tree:
-        return (True, last)
-    (isBst, last) = IsBst(tree.lhs, last)
-    if not isBst:
-        return (False, last)
-    if last and last > tree.value:
-        return (False, last)
-    return IsBst(tree.rhs, tree.value)
-
-
+# +
 def InOrderTraverse(tree):
     if not tree:
         return
-    rhs = tree.rhs  # making safe for mutation for bi-note solution
     yield from InOrderTraverse(tree.lhs)
-    yield tree.value
-    yield from InOrderTraverse(rhs)
+    yield tree
+    yield from InOrderTraverse(tree.rhs)
 
 
-[n for n in InOrderTraverse(bst1)]
+def IsBst(tree):
+    prev = None
+    for it in InOrderTraverse(tree):
+        firstElement = prev == None
+        if firstElement:
+            prev = it
+            continue  # first element always a BST
+        if prev.value > it.value:
+            return False
+        prev = it
+    return True
 
+
+# -
+
+print([n.value for n in InOrderTraverse(bst1)])
 IsBst(bst1)
 
+print([n.value for n in InOrderTraverse(notbst3)])
 IsBst(notbst3)
 
 
