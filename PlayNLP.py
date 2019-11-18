@@ -16,8 +16,8 @@
 # %% [markdown]
 # # Explore NLP against my journal entries
 #
-# This notebook allows me to play with NLP concepts using my personal journals. 
-# I've been writing personal journal entries ala 750 words a day for several years. 
+# This notebook allows me to play with NLP concepts using my personal journals.
+# I've been writing personal journal entries ala 750 words a day for several years.
 
 # %%
 """
@@ -50,7 +50,7 @@ from pandas_util import time_it
 from matplotlib import animation, rc
 from IPython.display import HTML
 from datetime import timedelta
-import itertools 
+import itertools
 
 # %%
 # This function is in the first block so you don't
@@ -189,7 +189,7 @@ def DocForCorpus(nlp, corpus: Corpus):
     # Remove domain specific stop words.
     doc = [token for token in doc_all if token.text.lower() not in domain_stop_words]
     ti.stop()
-    
+
     return doc
 
 
@@ -207,8 +207,8 @@ def DocForCorpus(nlp, corpus: Corpus):
 
 
 
-# Hymn better model: 
-# A - lookup all files. 
+# Hymn better model:
+# A - lookup all files.
 # B - Generate paths based on actual locations.
 
 def glob750_latest(year, month):
@@ -243,10 +243,10 @@ corpus_path_months[2018] = [glob750_old_archive(2018, month) for month in range(
     glob750_new_archive(2018, month) for month in (9, 11, 12)
 ]
 
-corpus_path_months[2019] = [glob750_new_archive(2019, month) for month in range(1, 8)]+ [glob750(2019, month) for month in range(8, 9)]
+corpus_path_months[2019] = [glob750_new_archive(2019, month) for month in range(1, 11)]+ [glob750_latest(2019, month) for month in range(11,12)]
 
 corpus_path_months_trailing = [
-    glob750(2018, month) for month in (9, 11, 12)
+    glob750_new_archive(2018, month) for month in (9, 11, 12)
 ] + corpus_path_months[2019]
 
 
@@ -372,7 +372,7 @@ def GetInterestingForCorpusPath(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"
 
 # %%
 # corpus_paths = corpus_paths_years
-corpus_paths = corpus_path_months[2016]
+corpus_paths = corpus_path_months[2019]
 print(corpus_paths)
 # %%
 for c in corpus_paths:
@@ -422,7 +422,8 @@ def PathToFriendlyTitle(path: str):
 
 # %%
 # corpus_paths = corpus_path_months[2018]+corpus_path_months[2019]
-corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
+# corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
+corpus_paths = corpus_path_months[2019]
 print(corpus_paths)
 pdfs = [
     MakePDF(GetInterestingForCorpusPath(p, "PROPN"), PathToFriendlyTitle(p))
@@ -473,13 +474,13 @@ def animate(i, ):
     # OMG: That was impossible to find!!!
     # Turns out every time you call plot, more patches (bars) are added to graph.  You need to remove them, which is very non-obvious.
     # https://stackoverflow.com/questions/49791848/matplotlib-remove-all-patches-from-figure
-    [p.remove() for p in reversed(animation.patches)] 
+    [p.remove() for p in reversed(animation.patches)]
     top_word_by_year.iloc[:,i].plot(title=f"Distribution {top_word_by_year.columns[i]}", kind='barh', color=animation.colors , xlim=(0,10))
     return (animation.patches,)
 
 
 anim = animation.FuncAnimation(
-    fig, animate, frames=len(top_word_by_year.columns), interval=timedelta(seconds=1).seconds * 1000, blit=False 
+    fig, animate, frames=len(top_word_by_year.columns), interval=timedelta(seconds=1).seconds * 1000, blit=False
 )
 HTML(anim.to_html5_video())
 

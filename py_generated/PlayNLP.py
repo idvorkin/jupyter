@@ -65,6 +65,7 @@ domain_stop_words = set(
     Deliberate Disciplined Daily
     Know Essential Provide Context
     First Understand Appreciate
+    Hymn Monday
     """.lower().split()
 )
 
@@ -245,11 +246,11 @@ corpus_path_months[2018] = [
 ] + [glob750_new_archive(2018, month) for month in (9, 11, 12)]
 
 corpus_path_months[2019] = [
-    glob750_new_archive(2019, month) for month in range(1, 8)
-] + [glob750(2019, month) for month in range(8, 9)]
+    glob750_new_archive(2019, month) for month in range(1, 11)
+] + [glob750_latest(2019, month) for month in range(11, 12)]
 
 corpus_path_months_trailing = [
-    glob750(2018, month) for month in (9, 11, 12)
+    glob750_new_archive(2018, month) for month in (9, 11, 12)
 ] + corpus_path_months[2019]
 
 
@@ -374,7 +375,7 @@ def GetInterestingForCorpusPath(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"
 # -
 
 # corpus_paths = corpus_paths_years
-corpus_paths = corpus_path_months[2016]
+corpus_paths = corpus_path_months[2019]
 print(corpus_paths)
 for c in corpus_paths:
     GraphScratchForCorpus(c, pos="PROPN")
@@ -420,7 +421,8 @@ def PathToFriendlyTitle(path: str):
 
 # +
 # corpus_paths = corpus_path_months[2018]+corpus_path_months[2019]
-corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
+# corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
+corpus_paths = corpus_path_months[2019]
 print(corpus_paths)
 pdfs = [
     MakePDF(GetInterestingForCorpusPath(p, "PROPN"), PathToFriendlyTitle(p))
