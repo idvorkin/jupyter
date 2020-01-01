@@ -4,8 +4,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.2.1
+#       format_version: '1.5'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -175,7 +175,7 @@ def merge(xs, ys):
 print(merge(l1, l2))
 
 
-# + {"toc-hr-collapsed": true, "cell_type": "markdown"}
+# + [markdown] toc-hr-collapsed=true
 # ### Intervals and sorting and named tupples
 # For interval questions, normally you do sort endpoints and go from there.
 
@@ -274,6 +274,8 @@ print(z)
 # * Need to make them a list using list()
 # * Great to make Iterators from logic (e.g. Tree in-order traversal, LL traversal etc)
 # * Great to make sequences of infinite length e.g. nextInt() as they don't require building a list.
+# * Nice solution when you find yourself appending to a variable to return like:
+# * ret = []... ret+=[next value] return ret
 #
 # Syntax:
 # * return -> Done
