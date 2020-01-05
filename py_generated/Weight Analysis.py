@@ -88,6 +88,7 @@ def box_plot_weight_over_time(df, x, title=""):
 
 
 earliest = arrow.utcnow().shift(months=-12).date()
+box_plot_weight_over_time(df[earliest:], idx_month_year, title="Recent weight by month")
 box_plot_weight_over_time(df[earliest:], idx_week_year, title="Recent weight by week")
 box_plot_weight_over_time(df_alltime, idx_month_year, "Weight by Month")
 
