@@ -5,8 +5,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: percent
-#       format_version: '1.2'
-#       jupytext_version: 1.2.0-rc1
+#       format_version: '1.3'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -243,7 +243,7 @@ corpus_path_months[2018] = [glob750_old_archive(2018, month) for month in range(
     glob750_new_archive(2018, month) for month in (9, 11, 12)
 ]
 
-corpus_path_months[2019] = [glob750_new_archive(2019, month) for month in range(1, 11)]+ [glob750_latest(2019, month) for month in range(11,12)]
+corpus_path_months[2019] = [glob750_new_archive(2019, month) for month in range(1, 13)]+ [glob750_latest(2020, month) for month in range(1,2)]
 
 corpus_path_months_trailing = [
     glob750_new_archive(2018, month) for month in (9, 11, 12)
@@ -262,7 +262,7 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 # ### Load simple corpus for my journal
 
 # %%
-corpus = LoadCorpus(corpus_path_months[2019][0])
+corpus = LoadCorpus(corpus_path_months[2019][-1])
 print(f"initial words {len(corpus.initial_words)} remaining words {len(corpus.words)}")
 
 
@@ -446,7 +446,7 @@ wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
 # Remove total column
 wordByTimespan = wordByTimespan.iloc[:, :-1]
 
-top_words_to_skip,   count_words   = 5, 10
+top_words_to_skip,   count_words   = 1, 10
 print (f"skipping:{top_words_to_skip}, count:{count_words} ")
 
 # wordByTimespan.iloc[:50, :].plot( kind="bar", subplots=False, legend=False, figsize=(15, 14), sharey=True )
@@ -454,6 +454,8 @@ wordByTimespan.iloc[top_words_to_skip:top_words_to_skip + count_words, :].T.plot
     kind="bar", subplots=True, legend=False, figsize=(15, 9), sharey=True
 )
 # wordByTimespan.iloc[:13, :].T.plot( kind="bar", subplots=False, legend=True, figsize=(15, 14), sharey=True )
+
+# %%
 
 # %%
 top_word_by_year = wordByTimespan.iloc[:15,:][::-1] # the -1 on the end reverse the count
