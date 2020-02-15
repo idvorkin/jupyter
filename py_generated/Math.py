@@ -4,15 +4,15 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.1.3
+#       format_version: '1.5'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# +
+# + jupyter={"outputs_hidden": false}
 def Primes(n):
     if not n or n < 1:
         raise Exception("n must be positive", n)
@@ -37,13 +37,15 @@ def crossOff(possible, prime):
     return nextPrime
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 Primes(1)
+# -
 
 Primes(3)
 Primes(18)
 
+# + jupyter={"outputs_hidden": false}
 Primes(-1)
 
+# + jupyter={"outputs_hidden": true}
 

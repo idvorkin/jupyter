@@ -4,15 +4,15 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.1.3
+#       format_version: '1.5'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# +
+# + jupyter={"outputs_hidden": false}
 # TODO: Still a bug in here
 def unsortedMin(xs, i, iMin):
     assert i > 0
@@ -60,11 +60,11 @@ def unsortedRange(xs):
     return (iUnsortedMin, iUnsortedMax)
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 unsortedRange([-3, 1, 0])
 
 
+# + jupyter={"outputs_hidden": false}
 def plusOne(ds):
     for i in range(len(ds) - 1, -1, -1):
         d = ds[i]
@@ -80,6 +80,7 @@ def plusOne(ds):
                 ds[i] = 0
 
 
+# + jupyter={"outputs_hidden": false}
 d = [1, 9, 3, 9, 9]
 plusOne(d)
 print(d)

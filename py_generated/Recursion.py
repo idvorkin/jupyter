@@ -4,15 +4,15 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.1.3
+#       format_version: '1.5'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# +
+# + jupyter={"outputs_hidden": false}
 # Count the number of ways a kid that can take 1, 2 or 3 steps can make
 # to cover N steps.
 
@@ -36,12 +36,12 @@ def CountSteps(n):
 
 for i in [1, 3, 7, 36]:
     print("Steps {}: Ways {}".format(i, CountSteps(i)))
-# -
 
+# + jupyter={"outputs_hidden": false}
 print("{}", 11)
 
 
-# +
+# + jupyter={"outputs_hidden": false}
 def CountMakeChangeExternal(denoms, total):
     if total <= 0:
         return 0
@@ -72,13 +72,14 @@ def CountMakeChange(denoms, total):
     )
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 CountMakeChangeExternal([5, 3], 14)
 
+# + jupyter={"outputs_hidden": false}
 CountMakeChangeExternal([25, 10, 5, 1], 80)
 
 
+# + jupyter={"outputs_hidden": true}
 def combsN(xs, n):
     if n == 0:
         yield []
@@ -88,10 +89,11 @@ def combsN(xs, n):
         yield from [[x] + ct for ct in combsN(xs[i + 1 :], n - 1)]
 
 
+# + jupyter={"outputs_hidden": false}
 for x in combsN([1, 2, 3, 4], 4):
     print(x)
 
-# +
+# + jupyter={"outputs_hidden": false}
 import itertools
 
 
@@ -129,12 +131,11 @@ def lost(board):
     return False
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 len(list(NQueensE(8)))
 
 
-# +
+# + jupyter={"outputs_hidden": false}
 def genBalancedE(n):
     yield from genBalanced("", 0, n, n)
 
@@ -154,8 +155,7 @@ def genBalanced(partial, cUnMatchedOpen, rOpen, rClosed):
         yield from genBalanced(partial + ")", cUnMatchedOpen - 1, rOpen, rClosed - 1)
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 print(list(genBalancedE(5)))
 
 
@@ -192,7 +192,7 @@ print("----")
 print(list(decomposePalindrome("ecc")))
 
 
-# +
+# + jupyter={"outputs_hidden": false}
 def between(t, s, e):
     return t >= s and t <= e
 
@@ -232,13 +232,15 @@ def findRotated(xs, t, s, e):
         return findRotated(xs, t, iMid + 1, e)
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 xs = [99, 0, 15, 23, 40, 98]
 findRotatedE(xs, 40)
 
+# + jupyter={"outputs_hidden": true}
 
 
+# + jupyter={"outputs_hidden": true}
 
 
+# + jupyter={"outputs_hidden": true}
 

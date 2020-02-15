@@ -4,15 +4,15 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.1.3
+#       format_version: '1.5'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# +
+# + jupyter={"outputs_hidden": true}
 from typing import List, Set, Dict, Tuple, Optional
 
 
@@ -32,8 +32,7 @@ class QueueFromStacks:
         return self.oldOnTop.pop()
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 m = QueueFromStacks()
 m.push(3)
 m.push(4)
@@ -43,5 +42,6 @@ m.pop()
 m.pop()
 m.push(8)
 m.pop()
+# -
 
 

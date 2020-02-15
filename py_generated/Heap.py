@@ -4,8 +4,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.1.3
+#       format_version: '1.5'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -120,7 +120,7 @@ class Heap:
         return str(self.storage)
 
 
-# +
+# + jupyter={"outputs_hidden": false}
 import random
 
 h = Heap()
@@ -129,8 +129,8 @@ for i in range(7):
     h.push(random.randint(-9999, 999))
 for i in range(7):
     print(h.pop())
-# -
 
+# + jupyter={"outputs_hidden": false}
 r = [random.randint(0, 200) for i in range(15)]
 print(r)
 for i in range(len(r)):
@@ -141,8 +141,11 @@ for i in range(len(r)):
     print(z.pop())
 
 
+# + jupyter={"outputs_hidden": true}
 
 
+# + jupyter={"outputs_hidden": true}
 
 
+# + jupyter={"outputs_hidden": true}
 

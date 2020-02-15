@@ -4,15 +4,15 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.1.3
+#       format_version: '1.5'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# +
+# + jupyter={"outputs_hidden": false}
 def reverse(s, start, end):
     while start < end:
         # swap
@@ -52,7 +52,7 @@ s = [*"  hi there  joe a b   "]
 print("<start>" + "".join(s) + "<end>")
 
 
-# +
+# + jupyter={"outputs_hidden": false}
 import collections
 
 Word = collections.namedtuple("Word", ["start", "end"])
@@ -60,8 +60,7 @@ w = Word(4, 5)
 print(*w)
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 def computeLongestFirstSubPaths(path):
     if not path or path[0] != "/":
         return None
@@ -72,6 +71,8 @@ def computeLongestFirstSubPaths(path):
         yield segments[1:iEnd]
 
 
+# + jupyter={"outputs_hidden": false}
 [p for p in computeLongestFirstSubPaths("/bob/barker")]
 
+# + jupyter={"outputs_hidden": true}
 

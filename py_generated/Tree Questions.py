@@ -4,15 +4,15 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.2.1
+#       format_version: '1.5'
+#       jupytext_version: 1.3.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
 #     name: python3
 # ---
 
-# + {"toc-hr-collapsed": false, "cell_type": "markdown"}
+# + [markdown] toc-hr-collapsed=false
 # # BSTs
 #
 # Notes:
@@ -92,8 +92,7 @@ def printTree(tree, depth=0):
     printTree(tree.rhs, depth + 1)
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 printTree(None)
 printTree(Tree(4))
 print("--BST--")
@@ -103,9 +102,10 @@ notbst3 = Tree(4, Tree(3), Tree(6, Tree(9), Tree(7)))
 print("--Not BST--")
 printTree(notbst3)
 
+# + jupyter={"outputs_hidden": false}
 
 
-# +
+# + jupyter={"outputs_hidden": false}
 def InOrderTraverse(tree):
     if not tree:
         return
@@ -127,16 +127,16 @@ def IsBst(tree):
     return True
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 print([n.value for n in InOrderTraverse(bst1)])
 IsBst(bst1)
 
+# + jupyter={"outputs_hidden": false}
 print([n.value for n in InOrderTraverse(notbst3)])
 IsBst(notbst3)
 
 
-# +
+# + jupyter={"outputs_hidden": false}
 def FindFlip(a):
     return FindFlipR(a, 0, len(a) - 1)
 
@@ -162,14 +162,17 @@ def FindFlipR(a, start, end):
     return None
 
 
-# -
-
+# + jupyter={"outputs_hidden": false}
 FindFlip([2, 1])
 
+# + jupyter={"outputs_hidden": true}
 FindFlip([9, 9, 1, 1])
 
+# + jupyter={"outputs_hidden": true}
 
 
+# + jupyter={"outputs_hidden": true}
 
+# -
 
 
