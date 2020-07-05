@@ -51,20 +51,20 @@ ax_actually.pie(sizes, explode=explode, labels=labels, startangle=300)
 ax_actually.set_title("What Actually Does")
 ax_actually.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle.
 
-ax_normal_hours.set_title("When working normal hours")
-ax_normal_hours.barh(y=[""], width=[40])
-ax_normal_hours.barh(y=[""], width=[32])
+ax_normal_hours.set_title("Time distribution working normal hours")
+ax_normal_hours.barh(y=[""], width=[44], color="red")
+ax_normal_hours.barh(y=[""], width=[36], color="royalblue")
 ax_normal_hours.legend(["Dicking Around", "Working"])
-ax_normal_hours.set_xlim(0, 80)
-ax_more_hours.set_title("When working more hours")
-ax_more_hours.barh(y=[""], width=[55])
-ax_more_hours.barh(y=[""], width=[35])
+ax_normal_hours.set_xlim(0, 70)
+ax_more_hours.set_title("Time distribution working more hours")
+ax_more_hours.barh(y=[""], width=[64], color="red")
+ax_more_hours.barh(y=[""], width=[44], color="royalblue")
 ax_more_hours.legend(["Dicking Around", "Working"])
-ax_more_hours.set_xlim(0, 80)
+ax_more_hours.set_xlim(0, 70)
 
 
 # plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=None)
-#  plt.subplots_adjust(hspace=1)
+#  plt.subplots_adjust(hspace=1)k
 
 
 plt.show()
