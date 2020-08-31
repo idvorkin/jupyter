@@ -26,7 +26,6 @@ pandas  = "*"
 pdfrw = "*" # pdf editor
 seaborn  =  "*"
 sklearn = "*"
-black = "*"
 mypy  =  "*"
 nltk = "*"
 wordcloud = "*"
