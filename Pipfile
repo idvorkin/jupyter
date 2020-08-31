@@ -20,6 +20,7 @@ ipython = "*"
 jupyter = "*"
 jupyterlab  = "*"
 matplotlib  =  "*"
+matplotlib-venn  =  "*"
 nbdime = "*"
 numpy  = "*"
 pandas  = "*"
@@ -36,6 +37,7 @@ humanize = "*"
 lime = "*"
 pandas-profiling = "*"
 numba = "*"
+sympy = "*"
 
 [dev-packages]
 # For VS Code editor
