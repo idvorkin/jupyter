@@ -20,13 +20,13 @@ import time
 from functools import lru_cache
 import seaborn as sns
 import humanize
-import swifter
+# Currently broken on 3.9 ??
+# import swifter
+# import pandas_profiling
 import dask
 import dask.dataframe as dd
 from IPython.display import display
-
 from humanize import intcomma, intword
-import pandas_profiling
 from functools import partial
 from arrow import now
 import arrow

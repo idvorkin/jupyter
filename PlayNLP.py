@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # ---
 # jupyter:
 #   jupytext:
@@ -6,7 +7,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.3.1
+#       jupytext_version: 1.7.0
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -67,6 +68,8 @@ domain_stop_words = set(
     Know Essential Provide Context
     First Understand Appreciate
     Hymn Monday
+    Grateful
+    ☐ ☑ K e tha Y X w
     """.lower().split()
 )
 
@@ -143,18 +146,20 @@ def LoadCorpus(corpus_path: str) -> Corpus:
         ('I"ll', "I'll"),
         ("that", "that"),
         ("taht", "that"),
-        ("ti ", " it "),
+        ("ti ", "it "),
         ("that'sa", "that's a"),
         ("Undersatnd", "Understand"),
-        ("Ill", "I'll"),
+        (" Ill ", " I'll "),
         ("Noitce", "Notice"),
         ("Whcih", "Which"),
-        ("K ", "OK "),
+        (" K ", " OK "),
         ("sTories", "stories"),
         ("htat", "that"),
         ("Getitng", "Getting"),
         ("Essenital", "Essential"),
         ("whcih", "which"),
+        (" nad ", " and "),
+        (" adn ", " and "),
     ]
 
     def fixTypos(s: str):
@@ -243,12 +248,14 @@ corpus_path_months[2018] = [glob750_old_archive(2018, month) for month in range(
     glob750_new_archive(2018, month) for month in (9, 11, 12)
 ]
 
-corpus_path_months[2019] = [glob750_new_archive(2019, month) for month in range(1, 13)]+ [glob750_latest(2020, month) for month in range(1,2)]
+corpus_path_months[2019] = [glob750_new_archive(2019, month) for month in range(1, 13)]
+corpus_path_months[2020] = [glob750_new_archive(2020, month) for month in range(1, 11)] # TBD compute month progratically
 
 corpus_path_months_trailing = [
     glob750_new_archive(2018, month) for month in (9, 11, 12)
-] + corpus_path_months[2019]
+] + corpus_path_months[2019] + corpus_path_months[2020]
 
+corpus_path_months_trailing
 
 # TODO: Add a pass to remove things with insufficient words.
 
@@ -262,7 +269,7 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 # ### Load simple corpus for my journal
 
 # %%
-corpus = LoadCorpus(corpus_path_months[2019][-1])
+corpus = LoadCorpus(corpus_path_months[2020][-1])
 print(f"initial words {len(corpus.initial_words)} remaining words {len(corpus.words)}")
 
 
@@ -372,7 +379,7 @@ def GetInterestingForCorpusPath(corpus_path: str, pos: str = "NOUN VERB ADJ ADV"
 
 # %%
 # corpus_paths = corpus_paths_years
-corpus_paths = corpus_path_months[2019]
+corpus_paths = corpus_path_months[2020]
 print(corpus_paths)
 # %%
 for c in corpus_paths:
@@ -423,7 +430,8 @@ def PathToFriendlyTitle(path: str):
 # %%
 # corpus_paths = corpus_path_months[2018]+corpus_path_months[2019]
 # corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
-corpus_paths = corpus_path_months[2019]
+corpus_paths = corpus_path_months_trailing[-12:]
+top_words_to_skip,   count_words   = 0, 10
 print(corpus_paths)
 pdfs = [
     MakePDF(GetInterestingForCorpusPath(p, "PROPN"), PathToFriendlyTitle(p))
@@ -446,7 +454,6 @@ wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
 # Remove total column
 wordByTimespan = wordByTimespan.iloc[:, :-1]
 
-top_words_to_skip,   count_words   = 1, 10
 print (f"skipping:{top_words_to_skip}, count:{count_words} ")
 
 # wordByTimespan.iloc[:50, :].plot( kind="bar", subplots=False, legend=False, figsize=(15, 14), sharey=True )
@@ -456,11 +463,11 @@ wordByTimespan.iloc[top_words_to_skip:top_words_to_skip + count_words, :].T.plot
 # wordByTimespan.iloc[:13, :].T.plot( kind="bar", subplots=False, legend=True, figsize=(15, 14), sharey=True )
 
 # %%
+top_words_to_skip, count_words = 0,50
+top_word_by_year = wordByTimespan.iloc[top_words_to_skip:top_words_to_skip + count_words, :][::-1]
+# top_word_by_year = wordByTimespan.iloc[:15,:][::-1] # the -1 on the end reverse the count
 
-# %%
-top_word_by_year = wordByTimespan.iloc[:15,:][::-1] # the -1 on the end reverse the count
-
-anim_fig_size=(16,10)
+anim_fig_size=(16,20)
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 ax = top_word_by_year.iloc[:,0].plot(
@@ -499,11 +506,7 @@ from spacy import displacy
 displacy.render(nlp("Igor wonders if Ray is working too much"))
 
 # %%
-corpus_path_months
 
 # %%
-corpus_path_months_trailing
-
-
 
 # %%
