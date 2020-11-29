@@ -32,12 +32,17 @@ nltk = "*"
 wordcloud = "*"
 spacy = "*"
 jupytext = "*"
-swifter = "*"
+# Busted on py 3.9
+##################
+
+# swifter = "*"
+# numba = "*"
+# pandas-profiling = "*"
+
 humanize = "*"
 lime = "*"
-pandas-profiling = "*"
-numba = "*"
 sympy = "*"
+bs4 = "*"
 
 [dev-packages]
 # For VS Code editor
