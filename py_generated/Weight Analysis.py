@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.3.1
+#       jupytext_version: 1.7.1
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -27,6 +27,7 @@ import arrow
 from matplotlib import animation, rc
 from IPython.display import HTML
 from datetime import timedelta
+import altair as alt
 
 
 # %matplotlib inline
@@ -61,18 +62,27 @@ df[idx_week_year] = df.index.to_series().apply(lambda t: f"{t.week}-{t.year-2000
 df = df.replace(0, np.nan)
 # Throw away junk data at the start of time
 df = df["2010/1/1":]  # type: ignore
+
+
 # (not sure why mypy can't handle this)
 # KG to lbs
-df[idx_weight] = df[idx_weight_kg] * 2.2
+# df[idx_weight] = df[idx_weight_kg] * 2.2
+df[idx_weight] = df[idx_weight_kg]
+
+# Throw away any weights less then 100
+df = df[df[idx_weight] > 100]
+
 dfW = df[idx_weight]
+
+
+# Remove any rows with 0 values
 
 
 # Helpful time aliases
 df_alltime = df
 
 
-# -
-
+# +
 def box_plot_weight_over_time(df, x, title=""):
     # In theory can use plot.ly (not free)  or Bokeh (not mpl compatible) but issues. So setting dimensions old school.
     # Manually setting the weight and width.
@@ -87,6 +97,21 @@ def box_plot_weight_over_time(df, x, title=""):
     plt.show()
 
 
+def box_plot_weight_over_time_sigh_vegas_broken(df, x, title, domain=(150, 250)):
+    height_in_inches = 4 * 60  # todo figure out how to get this by calculation
+    display(df)
+    c = (
+        alt.Chart(df)
+        .mark_boxplot()
+        .encode(y=alt.Y(idx_weight, scale=alt.Scale(domain=domain, clamp=True)), x=x)
+        .properties(width=4 * height_in_inches, height=height_in_inches, title=title)
+        .interactive()
+    )
+    display(c)
+
+
+# -
+
 earliest = arrow.utcnow().shift(months=-12).date()
 box_plot_weight_over_time(df[earliest:], idx_month_year, title="Recent weight by month")
 box_plot_weight_over_time(df[earliest:], idx_week_year, title="Recent weight by week")
@@ -94,18 +119,52 @@ box_plot_weight_over_time(df_alltime, idx_month_year, "Weight by Month")
 
 # # Time Series Analysis using resampling
 
-for freq in "Month Week Day".split():
-    pandasFreqValue = freq[0]  # hack, pandas Freq are D,W,M
-    ax = (
-        dfW.resample(pandasFreqValue)
-        .median()
-        .plot(title=f"Weight by {freq}", figsize=(16, 2))
+# +
+print("Scroll to see year markers, select in index to zoom in")
+
+
+def graph_weight_as_line(df, freq, domain):
+    pd_freq_value = freq[0]  # hack, pandas Freq are D,W,M
+    df_group_time = df.copy()[metric].resample(pd_freq_value)
+    t1 = df_group_time.count().reset_index()
+    # Create the root df for output
+    df_to_graph = t1.drop(columns=metric)
+    for q in [0.25, 0.5, 0.75, 0.9]:
+        df_to_graph[f"p{q*100}"] = df_group_time.quantile(q).reset_index()[metric]
+
+    # No start adding back the rows
+    df_melted = df_to_graph.melt(
+        id_vars=["Start"],
     )
-    ax.set_ylabel("lbs")
-    ax.set_xlabel("")
-    plt.show()
-# Can graph interactively using Bokeh @
-# https://stackoverflow.com/questions/45972782/plot-time-series-graph-using-bokeh
+    height_in_inches = 60  # todo figure out how to get this by calculation
+    selection = alt.selection_multi(fields=["variable"], bind="legend")
+    c = (
+        alt.Chart(df_melted)
+        .mark_line(point=True)
+        .encode(
+            y=alt.Y("value", title="", scale=alt.Scale(domain=domain)),
+            x="Start:T",
+            color="variable",
+            tooltip=["idate:T", "value:Q"],
+            opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
+        )
+        .properties(
+            width=16 * height_in_inches,
+            height=6 * height_in_inches,
+            title=f"{metric} By {freq}",
+        )
+        .interactive()
+    ).add_selection(selection)
+
+    display(c)
+
+
+earliest = arrow.utcnow().shift(months=-12).date()
+graph_weight_as_line(df[earliest:], "Week", (200, 240))
+for freq in "Month Week".split():
+    graph_weight_as_line(df, freq, (150, 240))
+# -
+
 
 dfM = dfW.resample("W").median()
 
@@ -126,8 +185,13 @@ def animate(i):
     return dfM[:year].plot(title=f"Weight through {year}").lines
 
 
+years_to_plot = 5
 anim = animation.FuncAnimation(
-    fig, animate, frames=4, interval=timedelta(seconds=2).seconds * 1000, blit=False
+    fig,
+    animate,
+    frames=years_to_plot,
+    interval=timedelta(seconds=2).seconds * 1000,
+    blit=False,
 )
 HTML(anim.to_html5_video())
 # TODO - how to get rid of the initial plot from animate.init() -- no clue.

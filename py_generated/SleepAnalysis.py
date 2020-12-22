@@ -94,9 +94,27 @@ df_alltime = df
 df
 
 
-# -
+# +
+# OMG - SO SAD - box plot sorting is broken in - vega:
+# https://github.com/vega/vega-lite/issues/4932
 
+# GRR - Need to go back to matplotlib
 def box_plot_weight_over_time(df, x, fact, title, domain):
+    # In theory can use plot.ly (not free)  or Bokeh (not mpl compatible) but issues. So setting dimensions old school.
+    # Manually setting the weight and width.
+    height_in_inches = 8
+    mpl.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
+
+    ax = sns.boxplot(x=x, y=fact, data=df)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
+    ax.set_title(title)
+    ax.set_xlabel("date")
+    ax.set_ylabel(fact)
+    ax.set_ylim(domain[0], domain[1])
+    plt.show()
+
+
+def box_plot_weight_over_time_vegas_broken_sort_order(df, x, fact, title, domain):
     height_in_inches = 4 * 60  # todo figure out how to get this by calculation
     c = (
         alt.Chart(df)
@@ -110,8 +128,8 @@ def box_plot_weight_over_time(df, x, fact, title, domain):
 
 # +
 earliest = arrow.utcnow().shift(months=-12).date()
-fact, domain = "dbedtime", (18, 25)
-# fact,domain = "dwaketime", (4,9)
+# fact, domain = "dbedtime", (18, 25)
+fact, domain = "dwaketime", (4, 9)
 # fact,domain = "Heartrate", (50,80)
 
 

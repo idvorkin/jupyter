@@ -16,6 +16,7 @@ name = "pypi"
 
 [packages]
 arrow  =  "*"
+altair  =  "*"
 ipython = "*"
 jupyter = "*"
 jupyterlab  = "*"
@@ -56,6 +57,3 @@ yapf = "*"
 pylint = "*"
 black = "*"
 pylama = "*"
-
-[pipenv]
-allow_prereleases = true
