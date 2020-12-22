@@ -121,6 +121,7 @@ box_plot_weight_over_time(df_alltime, idx_month_year, "Weight by Month")
 
 # +
 print("Scroll to see year markers, select in index to zoom in")
+metric = "Weight (lbs)"
 
 
 def graph_weight_as_line(df, freq, domain):
