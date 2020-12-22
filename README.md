@@ -1,4 +1,4 @@
-[![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/idvorkin/jupyter)
+[![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/idvorkin/jupyter?urlpath=lab)
 
 # jupyter
 
