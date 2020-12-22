@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+import altair as alt
 import matplotlib
 
 matplotlib.style.use("ggplot")
@@ -25,7 +26,7 @@ import numpy as np
 import matplotlib as mpl
 import arrow
 from matplotlib import animation, rc
-from IPython.display import HTML
+from IPython.display import HTML, display
 from datetime import timedelta
 
 
@@ -95,83 +96,125 @@ df
 
 # -
 
-def box_plot_weight_over_time(df, x, fact, title):
-    # In theory can use plot.ly (not free)  or Bokeh (not mpl compatible) but issues. So setting dimensions old school.
-    # Manually setting the weight and width.
-    height_in_inches = 8
-    mpl.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
-
-    ax = sns.boxplot(x=x, y=fact, data=df)
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
-    ax.set_title(title)
-    ax.set_xlabel("date")
-    ax.set_ylabel(fact)
-    # ax.set_ylim(4,8)
-    plt.show()
+def box_plot_weight_over_time(df, x, fact, title, domain):
+    height_in_inches = 4 * 60  # todo figure out how to get this by calculation
+    c = (
+        alt.Chart(df)
+        .mark_boxplot()
+        .encode(y=alt.Y(fact, scale=alt.Scale(domain=domain, clamp=True)), x=x)
+        .properties(width=4 * height_in_inches, height=height_in_inches, title=title)
+        .interactive()
+    )
+    display(c)
 
 
+# +
 earliest = arrow.utcnow().shift(months=-12).date()
-fact = "dduration"
-# fact = "Heartrate"
-# fact = "dwaketime"
-# fact = "dbedtime"
+fact, domain = "dbedtime", (18, 25)
+# fact,domain = "dwaketime", (4,9)
+# fact,domain = "Heartrate", (50,80)
+
+
 box_plot_weight_over_time(
-    df[earliest:], idx_month_year, fact, title=f"Recent {fact} by month"
+    df_alltime, idx_month_year, fact, f"{fact} by Month", domain=domain
+)
+
+box_plot_weight_over_time(
+    df[earliest:], idx_month_year, fact, title=f"Recent {fact} by month", domain=domain
 )
 box_plot_weight_over_time(
-    df[earliest:], idx_week_year, fact, title=f"Recent {fact} by week"
+    df[earliest:], idx_week_year, fact, title=f"Recent {fact} by week", domain=domain
 )
-box_plot_weight_over_time(df_alltime, idx_month_year, fact, f"{fact} by Month")
+# -
 
 # # Time Series Analysis using resampling
 
-fact = "dduration"
-dfW = df[fact]
-for freq in "Month Week Day".split():
-    pandasFreqValue = freq[0]  # hack, pandas Freq are D,W,M
-    ax = (
-        dfW.resample(pandasFreqValue)
-        .median()
-        .plot(title=f"{fact} by {freq}", figsize=(16, 2))
-    )
-    ax.set_ylabel(fact)
-    ax.set_xlabel("")
-    plt.show()
-# Can graph interactively using Bokeh @
-# https://stackoverflow.com/questions/45972782/plot-time-series-graph-using-bokeh
+# +
+# fact,domain = "dbedtime", (19,24)
+# fact,domain = "dwaketime", (4,9)
+fact, domain = "Heartrate", (50, 80)
+summary_quantile = 0.5  # 0.5 for median
 
-dfM = dfW.resample("W").median()
+print("Scroll to see year markers, select in index to zoom in")
+
+for freq in "Month Week".split():
+    pd_freq_value = freq[0]  # hack, pandas Freq are D,W,M
+    metric = "dbedtime;dwaketime;dduration".split(";")
+    to_graph = df.copy()[metric].resample(pd_freq_value)
+    to_graph = to_graph.quantile(summary_quantile).reset_index()
+
+    # Convert from PM to AM.
+    # Assume if bed time is before 12, it's wrapped to the next day. Clamp it ot midnight
+    to_graph.dbedtime = to_graph.dbedtime.apply(lambda x: x - 12 if x > 12 else 11.59)
+
+    # At this point each metric is in its own column
+    # melt them into a single 'variable' column so I can use a variable value by color.
+
+    melted = to_graph.melt(
+        id_vars=["idate"],
+    )
+    height_in_inches = 60  # todo figure out how to get this by calculation
+    selection = alt.selection_multi(fields=["variable"], bind="legend")
+    c = (
+        alt.Chart(melted)
+        .mark_line(point=True)
+        .encode(
+            y=alt.Y("value", title="", scale=alt.Scale()),
+            x="idate:T",
+            color="variable",
+            tooltip=["idate:T", "value:Q"],
+            opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
+        )
+        .properties(
+            width=16 * height_in_inches,
+            height=4 * height_in_inches,
+            title=f"Sleep stats by {freq} @P{summary_quantile*100}",
+        )
+        .interactive()
+    ).add_selection(selection)
+
+    display(c)
 
 # +
-anim_year_base = 2016
-anim_fig_size = (16, 7)
-fig = plt.figure(figsize=anim_fig_size)
-ax = fig.add_subplot(1, 1, 1)
-dfM[:f"{anim_year_base}"].plot(
-    title=f"Title Over Written", figsize=anim_fig_size, ylim=(150, 220), ax=ax
-)
-ax.set_ylabel("lbs")
-ax.set_xlabel("")
+metric, domain = "Heartrate", (50, 80)
 
+print("Scroll to see year markers, select in index to zoom in")
 
-def animate(i):
-    year = f"{anim_year_base+i}"
-    return dfM[:year].plot(title=f"Weight through {year}").lines
+for freq in "Month Week".split():
+    pd_freq_value = freq[0]  # hack, pandas Freq are D,W,M
+    df_group_time = df.copy()[metric].resample(pd_freq_value)
+    t1 = df_group_time.count().reset_index()
+    # Create the root df for output
+    df_to_graph = t1.drop(columns=metric)
+    for q in [0.25, 0.5, 0.75, 0.9]:
+        df_to_graph[f"p{q*100}"] = df_group_time.quantile(q).reset_index()[metric]
 
+    # No start adding back the rows
+    df_melted = df_to_graph.melt(
+        id_vars=["idate"],
+    )
+    height_in_inches = 60  # todo figure out how to get this by calculation
+    selection = alt.selection_multi(fields=["variable"], bind="legend")
+    c = (
+        alt.Chart(df_melted)
+        .mark_line(point=True)
+        .encode(
+            y=alt.Y("value", title="", scale=alt.Scale(domain=domain)),
+            x="idate:T",
+            color="variable",
+            tooltip=["idate:T", "value:Q"],
+            opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
+        )
+        .properties(
+            width=16 * height_in_inches,
+            height=6 * height_in_inches,
+            title=f"{metric} By {freq}",
+        )
+        .interactive()
+    ).add_selection(selection)
 
-years_to_plot = 5
-anim = animation.FuncAnimation(
-    fig,
-    animate,
-    frames=years_to_plot,
-    interval=timedelta(seconds=2).seconds * 1000,
-    blit=False,
-)
-HTML(anim.to_html5_video())
-# TODO - how to get rid of the initial plot from animate.init() -- no clue.
+    display(c)
 # -
-
-
 
 
 
