@@ -99,7 +99,7 @@ df
 # https://github.com/vega/vega-lite/issues/4932
 
 # GRR - Need to go back to matplotlib
-def box_plot_weight_over_time(df, x, fact, title, domain):
+def box_plot_metric(df, x, fact, title, domain):
     # In theory can use plot.ly (not free)  or Bokeh (not mpl compatible) but issues. So setting dimensions old school.
     # Manually setting the weight and width.
     height_in_inches = 8
@@ -114,7 +114,7 @@ def box_plot_weight_over_time(df, x, fact, title, domain):
     plt.show()
 
 
-def box_plot_weight_over_time_vegas_broken_sort_order(df, x, fact, title, domain):
+def box_plot_metric_vegas_broken_sort_order(df, x, fact, title, domain):
     height_in_inches = 4 * 60  # todo figure out how to get this by calculation
     c = (
         alt.Chart(df)
@@ -133,14 +133,12 @@ fact, domain = "dwaketime", (4, 9)
 # fact,domain = "Heartrate", (50,80)
 
 
-box_plot_weight_over_time(
-    df_alltime, idx_month_year, fact, f"{fact} by Month", domain=domain
-)
+box_plot_metric(df_alltime, idx_month_year, fact, f"{fact} by Month", domain=domain)
 
-box_plot_weight_over_time(
+box_plot_metric(
     df[earliest:], idx_month_year, fact, title=f"Recent {fact} by month", domain=domain
 )
-box_plot_weight_over_time(
+box_plot_metric(
     df[earliest:], idx_week_year, fact, title=f"Recent {fact} by week", domain=domain
 )
 # -
