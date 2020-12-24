@@ -63,9 +63,13 @@ idx_date = "idate"
 # https://stackoverflow.com/questions/16176996/keep-only-date-part-when-using-pandas-to-datetime
 df[idx_date] = pd.to_datetime(df.waketime).dt.normalize()
 
-df = df.set_index(df[idx_date])
+# renaming the column to avoid index having a name.
+df = df.set_index(pd.to_datetime(df.waketime).dt.normalize().rename(None))
+
 df.sort_index(inplace=True)
+
 # Create Time Period Groups
+# TODO use time periods for this.
 idx_month_year = "month_year"
 df[idx_month_year] = df.index.to_series().apply(lambda t: arrow.get(t).format("MMM-YY"))
 
@@ -148,37 +152,45 @@ box_plot_metric(
 # +
 # fact,domain = "dbedtime", (19,24)
 # fact,domain = "dwaketime", (4,9)
-fact, domain = "Heartrate", (50, 80)
+# fact, domain = "Heartrate", (50, 80)
+
 summary_quantile = 0.5  # 0.5 for median
 
 print("Scroll to see year markers, select in index to zoom in")
 
 for freq in "Month Week".split():
+
     pd_freq_value = freq[0]  # hack, pandas Freq are D,W,M
-    metric = "dbedtime;dwaketime;dduration".split(";")
-    to_graph = df.copy()[metric].resample(pd_freq_value)
-    to_graph = to_graph.quantile(summary_quantile).reset_index()
 
-    # Convert from PM to AM.
+    facts_to_graph = "dbedtime;dwaketime;dduration".split(";")
+    to_graph = (
+        df.copy()[facts_to_graph].resample(pd_freq_value).quantile(summary_quantile)
+    )
+
+    # Convert bedtime from PM to AM so it looks better on a rgraph
     # Assume if bed time is before 12, it's wrapped to the next day. Clamp it ot midnight
-    to_graph.dbedtime = to_graph.dbedtime.apply(lambda x: x - 12 if x > 12 else 11.59)
+    def FixUpBedtime(x):
+        return x - 12 if x > 12 else 11.99
 
-    # At this point each metric is in its own column
-    # melt them into a single 'variable' column so I can use a variable value by color.
+    to_graph.dbedtime = to_graph.dbedtime.apply(FixUpBedtime)
 
-    melted = to_graph.melt(
-        id_vars=["idate"],
+    # At this point each summarized fact is in its own column
+    # melt them  (e.g. multiplex them) into a single column, which results in variable and value column.
+
+    melted = to_graph.reset_index().melt(
+        id_vars=["index"],
     )
     height_in_inches = 60  # todo figure out how to get this by calculation
+
     selection = alt.selection_multi(fields=["variable"], bind="legend")
     c = (
         alt.Chart(melted)
         .mark_line(point=True)
         .encode(
             y=alt.Y("value", title="", scale=alt.Scale()),
-            x="idate:T",
+            x="index:T",
             color="variable",
-            tooltip=["idate:T", "value:Q"],
+            tooltip=["index:T", "value:Q"],
             opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
         )
         .properties(
@@ -192,22 +204,50 @@ for freq in "Month Week".split():
     display(c)
 
 # +
-metric, domain = "Heartrate", (50, 80)
+fact, domain = "Heartrate", (50, 80)
 
 print("Scroll to see year markers, select in index to zoom in")
 
-for freq in "Month Week".split():
-    pd_freq_value = freq[0]  # hack, pandas Freq are D,W,M
-    df_group_time = df.copy()[metric].resample(pd_freq_value)
-    t1 = df_group_time.count().reset_index()
-    # Create the root df for output
-    df_to_graph = t1.drop(columns=metric)
-    for q in [0.25, 0.5, 0.75, 0.9]:
-        df_to_graph[f"p{q*100}"] = df_group_time.quantile(q).reset_index()[metric]
 
-    # No start adding back the rows
-    df_melted = df_to_graph.melt(
-        id_vars=["idate"],
+def quantile_support_empty(x, q):
+    # quantile crashes if it's passed an array with all None's, so handle that case manually
+    # all the other summary metrics like np.mean and np.median support this, so arguably it's an np bug.
+    # but whatevez'
+    # https://stackoverflow.com/questions/45138917/python-error-cannot-do-a-non-empty-take-from-an-empty-axes
+    if len(x.dropna()) == 0:
+        return None
+
+    return np.quantile(x, q=q)
+
+
+def p25(x):
+    return quantile_support_empty(x, 0.25)
+
+
+def p50(x):
+    return quantile_support_empty(x, 0.5)
+
+
+def p90(x):
+    return quantile_support_empty(x, 0.75)
+
+
+for freq in "Week Month".split():
+    pd_freq_value = freq[0]  # hack, pandas Freq are D,W,M
+    df_group_time = df.copy()[fact].resample(pd_freq_value)
+
+    # Make a long frame with percentiles as facts
+
+    # ASIDE:
+    #   We could do this with lambda functions for conciseness and dynamism, BUT column renaming during agg is a PITA
+    #   so just doing it with named functions for now.
+
+    df_to_graph = df_group_time.agg([p25, p50, p90])
+    display(df_to_graph)
+
+    # Convert the long column to narrow, by multiplexing it down (df.melt)
+    df_melted = df_to_graph.reset_index().melt(
+        id_vars=["index"],
     )
     height_in_inches = 60  # todo figure out how to get this by calculation
     selection = alt.selection_multi(fields=["variable"], bind="legend")
@@ -216,21 +256,22 @@ for freq in "Month Week".split():
         .mark_line(point=True)
         .encode(
             y=alt.Y("value", title="", scale=alt.Scale(domain=domain)),
-            x="idate:T",
+            x="index:T",
             color="variable",
-            tooltip=["idate:T", "value:Q"],
+            tooltip=["index:T", "value:Q"],
             opacity=alt.condition(selection, alt.value(1), alt.value(0.2)),
         )
         .properties(
             width=16 * height_in_inches,
             height=6 * height_in_inches,
-            title=f"{metric} By {freq}",
+            title=f"{fact} By {freq}",
         )
         .interactive()
     ).add_selection(selection)
 
     display(c)
 # -
+
 
 
 
