@@ -22,6 +22,7 @@ jupyter = "*"
 jupyterlab  = "*"
 matplotlib  =  "*"
 matplotlib-venn  =  "*"
+pandas_datareader = "*"
 nbdime = "*"
 numpy  = "*"
 pandas  = "*"
@@ -35,11 +36,9 @@ spacy = "*"
 jupytext = "*"
 # Busted on py 3.9
 ##################
-
 # swifter = "*"
 # numba = "*"
 # pandas-profiling = "*"
-
 humanize = "*"
 lime = "*"
 sympy = "*"
@@ -57,3 +56,6 @@ yapf = "*"
 pylint = "*"
 black = "*"
 pylama = "*"
+
+[pipenv]
+allow_prereleases = true
