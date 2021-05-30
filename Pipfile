@@ -24,7 +24,7 @@ matplotlib  =  "*"
 matplotlib-venn  =  "*"
 pandas_datareader = "*"
 nbdime = "*"
-numpy  = "*"
+# numpy  = "*"
 pandas  = "*"
 pdfrw = "*" # pdf editor
 seaborn  =  "*"
@@ -46,6 +46,7 @@ bs4 = "*"
 jupyterlab-vim = "*"
 dask = "*"
 fsspec = "*"
+numpy = "*"
 
 [dev-packages]
 # For VS Code editor
@@ -53,7 +54,7 @@ fsspec = "*"
 #   - refactoring: rope
 #   - autoformat: yapf
 ##############################
-prospector = "*"
+# prospector = "*"
 rope = "*"
 yapf = "*"
 pylint = "*"

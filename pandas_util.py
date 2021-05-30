@@ -44,7 +44,7 @@ def toPercentForMonkeyPatch(appliable: any):
 
 
 # Monkey Patch some methods
-pd.core.series.Series.toPercent = toPercentForMonkeyPatch
+pd.core.series.Series.toPercent = toPercentNP # toPercentForMonkeyPatch
 
 
 @dataclass
