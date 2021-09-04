@@ -5,8 +5,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: light
-#       format_version: '1.4'
-#       jupytext_version: 1.2.0-rc1
+#       format_version: '1.5'
+#       jupytext_version: 1.11.5
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -31,7 +31,7 @@ from typing import List, Tuple
 # from dataclasses import dataclass
 import pandas as pd
 
-# import numpy as np
+import numpy as np
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -57,11 +57,14 @@ import dask.dataframe as dd
 from IPython.display import display
 
 from humanize import intcomma, intword
-import pandas_profiling
+# import pandas_profiling
 import arrow
 import datetime
+from datetime import timedelta, date
 from functools import partial
 from pandas_util import time_it
+import altair as alt
+from icecream import ic
 # -
 
 
@@ -72,14 +75,16 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 # # Load Data set
 
 # +
-# raw_csv = "~/data/wamd.all.csv"
-raw_csv = "~/data/all.messages.csv"
+#raw_csv = "~/data/wamd.all.csv"
+raw_csv = "~/data/imessage.csv"
 cleaned_df_pickled = f"{os.path.expanduser(raw_csv)}.pickle.gz"
 
 
 # Load+Clean+Explore data using Dask as it's got multi-core.
 # Then convert to a pandas dataframe pickle.
-# df = dd.read_csv(raw_csv,sep='\t' )
+dask_df = dd.read_csv(raw_csv,sep=',' )
+df = dask_df.compute()
+#df = pd.read_csv(raw_csv,sep=',')
 # df = df.compute()
 # df = pd.read_csv(raw_csv,sep='\t')
 # df = pd.read_csv(raw_csv, sep="|", lineterminator="\n", error_bad_lines=False)
@@ -90,7 +95,13 @@ df
 # +
 # clean up some  data
 
-datetimeColumnName, customerIdColumnName = "date_uct", "id"
+# datetimeColumnName, customerIdColumnName = "date_uct", "id"
+
+# workplace chat
+# datetimeColumnName, customerIdColumnName = "date", "name"
+
+# imessage
+datetimeColumnName, customerIdColumnName = "date", "to_phone"
 
 # setup date column
 df["datetime"] = pd.to_datetime(df[datetimeColumnName], errors="coerce")
@@ -100,21 +111,10 @@ df["customer_id"] = df[customerIdColumnName]
 # -
 
 # df = df.compute()
-# df.to_pickle(cleaned_df_pickled)
+#df.to_pickle(cleaned_df_pickled)
 ti = time_it(f"Load dataframe:{cleaned_df_pickled}")
 df = pd.read_pickle(cleaned_df_pickled)
 ti.stop()
-
-# +
-# df = df.compute()
-# df.to_pickle(cleaned_df_pickled)
-# + {}
-# df = df.compute()
-# df.to_pickle(cleaned_df_pickled)
-# df.set_index
-# df = df.reset_index(drop=True)
-# kdf.index
-# -
 
 # # Data Analysis -
 # ### Home Grown
@@ -123,7 +123,7 @@ ti.stop()
 # gotta be a more elegant way, but doing this for now
 
 ti = time_it("compute distribution")
-distribs = [df[c].value_counts(normalize=True).toPercent() for c in df.columns]
+distribs = [df[c].value_counts(normalize=True) for c in df.columns]
 ti.stop()
 
 # +
@@ -153,9 +153,9 @@ print("--Flat distribution--")
 # df = df.reset_index(drop = True)
 profile_filename = "output.html"
 ti = time_it(f"profiling dataframe to {profile_filename}")
-# pr = df.reset_index(drop=True).profile_report()
-# pr.to_file(output_file=profile_filename)
-# pr
+#pr = df.reset_index(drop=True).profile_report()
+#pr.to_file(output_file=profile_filename)
+#pr
 ti.stop()
 
 
@@ -215,6 +215,7 @@ cid_by_date = df["2019":].pivot_table(
 # df_hc.pivot_table(index=["customer_id"], columns=pd.Grouper(freq=freq), aggfunc="count")[ "customer_id" ].T.plot(title=f"customer {irange} by freq={freq}", figsize=(12, 8))
 
 
+# +
 def cid_by_freq(df, freq):
     return df["2019":].pivot_table(
         values="datetime",
@@ -222,6 +223,7 @@ def cid_by_freq(df, freq):
         columns=pd.Grouper(freq=freq),
         aggfunc="any",
     )
+
 
 
 # +
@@ -252,16 +254,16 @@ plt.show()
 
 df_tr = df["2019"]
 customer_by_count = df_tr.customer_id.value_counts()
-irange = range(0, 5)
+irange = range(0,5)
 df_hc = df_tr[df_tr.customer_id.isin(customer_by_count.index[irange].values)]
 
-top_customer_by_month = df_hc.pivot_table(
-    values="datetime",
-    index=["customer_id"],
-    columns=pd.Grouper(freq="M"),
-    aggfunc="count",
-    fill_value=0,
-).T
+top_customer_by_month =  df_hc.pivot_table(
+        values="datetime",
+        index=["customer_id"],
+        columns=pd.Grouper(freq="M"),
+        aggfunc="count",
+    fill_value=0
+        ).T
 
 for kind in "line area bar".split():
     top_customer_by_month.plot(title="Top customers usage over time", kind=kind)
@@ -269,5 +271,77 @@ for kind in "line area bar".split():
 print(f"customer_by_count\n{customer_by_count.head(10)}")
 # -
 
+
+df
+
+
+# +
+# df[df.customer_id=="Sergio Wolman"].datetime.dt.weekday.value_counts().orderby()
+#df = df[df.customer_id=="Sergio Wolman"]
+
+# +
+#  Resample to hours
+# Select weekdays between 6 and 19
+def filter_work_hours(df):
+    df = by_hour_count(df)
+    return df[(df.index.hour >5) & (df.index.hour <19) & (df.index.weekday <5)] 
+
+def by_hour_count(df):
+    return df.resample('H').count().rename(columns={'customer_id':'count_messages'})
+
+def pivot_day_by_hour_no_melt(df,agg):
+    df = df.resample('H').count().rename(columns={'customer_id':'count_messages'})
+    pv = df.pivot_table(index=df.index.weekday, columns=df.index.hour,values="count_messages",aggfunc=agg)
+    pv.index.name,  pv.columns.name = "day","hour"
+    return pv
+
+
+def pivot_day_by_hour(df,agg):
+    pv = df.pivot_table(index=df.index.weekday, columns=df.index.hour,values="count_messages",aggfunc=agg)
+    pv.index.name,  pv.columns.name = "day","hour"
+    return pv
+
+
+def heat_map(df,agg, title,is_pivoted=False):
+    m =  df if is_pivoted else pivot_day_by_hour(df,agg)
+    m = m.reset_index().melt(id_vars=["day"])
+    
+    # turn pivotted day/hour back to datetimes for altair plotting
+    start_of_week = date.today() - timedelta(date.today().weekday())
+    now = datetime.datetime(year=2000,month=1,day=1)
+    m.day = pd.to_datetime(m.day.apply(lambda x:start_of_week + timedelta(days=x)))
+    m.hour = pd.to_datetime(m.hour.apply(lambda x:now + timedelta(hours = now.hour + x)))
+    
+    hm =  alt.Chart(m).mark_rect().encode( 
+        alt.Y('day(day):O'), 
+        alt.X('hours(hour):O'),
+        color=alt.Color('value')
+    ).properties(title=title)
+    
+    text =  alt.Chart(m).mark_text().encode( 
+        alt.Y('day(day):O'), 
+        alt.X('hours(hour):O'),
+        alt.Text('value',format="d"), # format as decimal
+        color=alt.value('white')
+    ).properties(title=title)
+    
+    return hm + text
+
+
+q = 99
+
+# hm =  draw_heat_map(t2,functools.partial(np.quantile,q=quantile),f"{int(quantile*100)}th percentile")
+# sergio =  df[df.name=='Sergio Wolman']
+from_ammon =  df[(df.customer_id=='+12063567091') & (df.is_from_me == False)]
+to_ammon =  df[(df.customer_id=='+12063567091') & (df.is_from_me == True)]
+for q in [60,80, 95,99]:
+    agg = partial(np.quantile, q=q*0.01)
+    f_ammon = pivot_day_by_hour_no_melt(from_ammon,agg)
+    t_ammon = pivot_day_by_hour_no_melt(to_ammon,agg)
+    delta_weight = t_ammon/(f_ammon+t_ammon).apply(lambda x:x*.01)
+    display(heat_map(delta_weight,agg=None, is_pivoted=True, title=f"% Igor Messages P{q}"))
+    hm  =  heat_map(by_hour_count(to_ammon),agg,f"Ammon P{q}")
+    display(hm)
+# -
 
 

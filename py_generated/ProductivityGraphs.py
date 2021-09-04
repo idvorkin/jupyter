@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.5.0
+#       jupytext_version: 1.11.5
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -71,5 +71,68 @@ plt.show()
 # -
 
 
+
+# +
+plt.xkcd()
+height_in_inches = 8
+import matplotlib.patches as mpatches
+
+
+mpl.rc("figure", figsize=(1 * height_in_inches, height_in_inches))
+
+# Pie chart, where the slices will be ordered and plotted counter-clockwise:
+
+fig1, (
+    (ax_problem_size)
+) = plt.subplots(1, 1)
+
+
+ax_problem_size.set_title("How big a problem feels")
+ax_problem_size.bar(x=[""], height=[0], color="red")
+ax_problem_size.bar(x=["At Night"], height=[40], color="red")
+ax_problem_size.bar(x=["Next Morning"], height=[7], color="blue")
+ax_problem_size.set_xlim(0.5,2.5)
+
+night  = mpatches.Patch(color='red', label='At Night')
+day = mpatches.Patch(color='Blue', label='Next Morning')
+
+ax_problem_size.legend(handles=[night,day])
+
+
+
+plt.show()
+
+# +
+plt.xkcd()
+height_in_inches = 12
+mpl.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
+
+# Pie chart, where the slices will be ordered and plotted counter-clockwise:
+
+fig1,  (career_pie, life_pie) = plt.subplots(1, 2)
+
+career_pie.axis(
+    "equal"
+)  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+labels = ["Job Title", "Compensation"]
+sizes = [40, 60]
+explode = [0.1,0]
+career_pie.pie(sizes, explode=explode, labels=labels, startangle=0)
+career_pie.set_title("Career Discussions\nDeafult")
+career_pie.axis("equal")  # Equal aspect ratio ensures that pie is drawn as a circle.
+
+labels = ["Job Title", "Compensation", "Health", "Hobbies", "Friends and Family"]
+sizes = [20, 15, 10, 10, 10]
+explode = (0.0, 0, 0.1, 0.1, 0.1)  # only "explode" the 2nd slice (i.e. 'Hogs')
+life_pie.set_title("Career Discussions\nWith the big picture")
+life_pie.pie(sizes, explode=explode, labels=labels, startangle=300)
+
+# plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=None, hspace=None)
+#  plt.subplots_adjust(hspace=1)k
+
+
+plt.show()
+# -
 
 
