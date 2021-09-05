@@ -64,7 +64,6 @@ def pv2(base_filename: str, input_video):
             # PERF: Processing at 1/4 size boosts FPS by TK%
             in_frame = shrink_image_half(original_frame)
 
-
             # PERF: Motion Mask sampled frames
             motion_mask = to_motion_mask_fast(state, in_frame)
 
@@ -78,11 +77,10 @@ def pv2(base_filename: str, input_video):
                 burn_in_debug_info(debug_frame, idx, in_fps)
                 # cv2.imshow(f"{base_filename} Input", shrink_image_half(debug_frame))
                 # cv2.waitKey(1)
-                _, jpg = cv2.imencode('.jpeg', original_frame)
+                _, jpg = cv2.imencode(".jpeg", original_frame)
                 clear_output(True)
                 display(Image(data=jpg.tobytes()))
-                print ("Hello")
-                if idx > 1000: break
+                print("Hello")
 
             output_unique.write(original_frame)
 
@@ -97,8 +95,9 @@ def pv2(base_filename: str, input_video):
     for f in output_video_files:
         f.release()
 
+
 input_video = cv2.VideoCapture(input_video_path)
-pv2(basename,input_video)
+pv2(basename, input_video)
 
 
 

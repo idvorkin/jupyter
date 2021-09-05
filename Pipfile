@@ -51,6 +51,9 @@ opencv-python = "*"
 pillow = "*"
 icecream = "*"
 imutils = "*"
+tensorflow ="*"
+imgaug="*"
+pixellib="*"
 
 [dev-packages]
 # For VS Code editor
