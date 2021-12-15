@@ -6,9 +6,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.11.2
+#       jupytext_version: 1.12.0
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -78,15 +78,16 @@ matplotlib.rc("figure", figsize=(2 * height_in_inches, height_in_inches))
 
 # %%
 #raw_csv = "~/data/wamd.all.csv"
-raw_csv = "~/data/imessage.csv"
+# raw_csv = "~/data/imessage.csv"
+raw_csv = "~/data/sergio.csv"
 cleaned_df_pickled = f"{os.path.expanduser(raw_csv)}.pickle.gz"
 
 
 # Load+Clean+Explore data using Dask as it's got multi-core.
 # Then convert to a pandas dataframe pickle.
-dask_df = dd.read_csv(raw_csv,sep=',' )
-df = dask_df.compute()
-#df = pd.read_csv(raw_csv,sep=',')
+# dask_df = dd.read_csv(raw_csv,sep=',' )
+#df = dask_df.compute()
+df = pd.read_csv(raw_csv,sep=',')
 # df = df.compute()
 # df = pd.read_csv(raw_csv,sep='\t')
 # df = pd.read_csv(raw_csv, sep="|", lineterminator="\n", error_bad_lines=False)
@@ -95,28 +96,37 @@ df
 
 
 # %%
+# df = df.compute()
+#df.to_pickle(cleaned_df_pickled)
+#ti = time_it(f"Load dataframe:{cleaned_df_pickled}")
+#df = pd.read_pickle(cleaned_df_pickled)
+# ti.stop()
+
+# %%
+isWorkChat = True
+isImessage = False
 # clean up some  data
 
-# datetimeColumnName, customerIdColumnName = "date_uct", "id"
+datetimeColumnName, customerIdColumnName = "date_uct", "id"
 
-# workplace chat
-# datetimeColumnName, customerIdColumnName = "date", "name"
+if isWorkChat: 
+    datetimeColumnName, customerIdColumnName = "date", "name"
 
-# imessage
-datetimeColumnName, customerIdColumnName = "date", "to_phone"
+if isImessage:
+    datetimeColumnName, customerIdColumnName = "date", "to_phone"
+
 
 # setup date column
 df["datetime"] = pd.to_datetime(df[datetimeColumnName], errors="coerce")
-df = df.set_index(df.datetime)
-# setup customer id
+
+
 df["customer_id"] = df[customerIdColumnName]
 
-# %%
-# df = df.compute()
-#df.to_pickle(cleaned_df_pickled)
-ti = time_it(f"Load dataframe:{cleaned_df_pickled}")
-df = pd.read_pickle(cleaned_df_pickled)
-ti.stop()
+# for workplace chat
+if isWorkChat:
+    df["is_from_me"] = df.apply(lambda r:r.customer_id == "Igor Dvorkin",axis=1) # depends on 
+df = df.set_index(df.datetime)
+df
 
 # %% [markdown]
 # # Data Analysis -
@@ -286,6 +296,8 @@ df
 #df = df[df.customer_id=="Sergio Wolman"]
 
 # %%
+
+# %%
 #  Resample to hours
 # Select weekdays between 6 and 19
 def filter_work_hours(df):
@@ -334,19 +346,30 @@ def heat_map(df,agg, title,is_pivoted=False):
     return hm + text
 
 
-q = 99
-
 # hm =  draw_heat_map(t2,functools.partial(np.quantile,q=quantile),f"{int(quantile*100)}th percentile")
-# sergio =  df[df.name=='Sergio Wolman']
-from_ammon =  df[(df.customer_id=='+12063567091') & (df.is_from_me == False)]
-to_ammon =  df[(df.customer_id=='+12063567091') & (df.is_from_me == True)]
+sergio =  df[df.name=='Sergio Wolman']
+#heat_map(filter_work_hours(sergio), np.count, "Sergio Time Count")
+#display(hm)
+
+# from_ammon =  df[(df.customer_id=='+12063567091') & (df.is_from_me == False)]
+# to_ammon =  df[(df.customer_id=='+12063567091') & (df.is_from_me == True)]
 for q in [60,80, 95,99]:
     agg = partial(np.quantile, q=q*0.01)
-    f_ammon = pivot_day_by_hour_no_melt(from_ammon,agg)
-    t_ammon = pivot_day_by_hour_no_melt(to_ammon,agg)
-    delta_weight = t_ammon/(f_ammon+t_ammon).apply(lambda x:x*.01)
-    display(heat_map(delta_weight,agg=None, is_pivoted=True, title=f"% Igor Messages P{q}"))
-    hm  =  heat_map(by_hour_count(to_ammon),agg,f"Ammon P{q}")
+    #f_ammon = pivot_day_by_hour_no_melt(from_ammon,agg)
+    #t_ammon = pivot_day_by_hour_no_melt(to_ammon,agg)
+    #delta_weight = t_ammon/(f_ammon+t_ammon).apply(lambda x:x*.01)
+    # display(heat_map(delta_weight,agg=None, is_pivoted=True, title=f"% Igor Messages P{q}"))
+    hm  =  heat_map(by_hour_count(sergio),agg,f"Ammon P{q}")
+    # display(hm)
+    
+for q in [50, 90, 95,99]:
+    agg = partial(np.quantile, q=q*0.01)
+    #f_ammon = pivot_day_by_hour_no_melt(from_ammon,agg)
+    #t_ammon = pivot_day_by_hour_no_melt(to_ammon,agg)
+    #delta_weight = t_ammon/(f_ammon+t_ammon).apply(lambda x:x*.01)
+    # display(heat_map(delta_weight,agg=None, is_pivoted=True, title=f"% Igor Messages P{q}"))
+    hm  =  heat_map(filter_work_hours(sergio),agg,f"Sergio<->Igor chat messages @ P{q}")
     display(hm)
+    
 
 # %%
