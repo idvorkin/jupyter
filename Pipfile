@@ -51,7 +51,6 @@ opencv-python = "*"
 pillow = "*"
 icecream = "*"
 imutils = "*"
-tensorflow ="*"
 imgaug="*"
 pixellib="*"
 
