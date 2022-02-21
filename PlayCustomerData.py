@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.12.0
+#       jupytext_version: 1.13.0
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -370,6 +370,6 @@ for q in [50, 90, 95,99]:
     # display(heat_map(delta_weight,agg=None, is_pivoted=True, title=f"% Igor Messages P{q}"))
     hm  =  heat_map(filter_work_hours(sergio),agg,f"Sergio<->Igor chat messages @ P{q}")
     display(hm)
-    
+
 
 # %%
