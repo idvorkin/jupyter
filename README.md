@@ -1,12 +1,12 @@
+# Uncategorized Jupyter notebooks
+
+A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/github/idvorkin/jupyter) here.
+
 [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/idvorkin/jupyter?urlpath=lab)
-
-# jupyter
-
-A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/github/idvorkin/jupyter).
 
 ## Good plugins
 
-```
+```bash
 jupyter labextension install @jupyterlab/toc
 jupyter labextension install jupyterlab_vim
 jupyter labextension install jupyterlab-jupytext
@@ -20,7 +20,7 @@ jupyter labextension install jupyterlab-jupytext
 ## Vim usage jupyter-lab
 
 V2 of the jupyter shell will be jupyter-lab. They have a seperate VIM plugin:
-https://github.com/jwkvam/jupyterlab_vim
+<https://github.com/jwkvam/jupyterlab_vim>
 
 ## Jupyter diff tools
 
@@ -28,7 +28,7 @@ https://github.com/jwkvam/jupyterlab_vim
 
 ## Jupyter To Python Round Trip ( JupyText)
 
-https://github.com/mwouts/jupytext
+<https://github.com/mwouts/jupytext>
 
 Use From the command line:
 
