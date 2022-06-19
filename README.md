@@ -4,7 +4,6 @@ A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/gi
 
 [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/idvorkin/jupyter?urlpath=lab)
 
-
 ## Good plugins
 
 ```bash
@@ -22,7 +21,7 @@ jupyter labextension install jupyterlab-jupytext
 ## Vim usage jupyter-lab
 
 V2 of the jupyter shell will be jupyter-lab. They have a seperate VIM plugin:
-https://github.com/jwkvam/jupyterlab_vim
+<https://github.com/jwkvam/jupyterlab_vim>
 
 ## Jupyter diff tools
 
@@ -30,7 +29,7 @@ https://github.com/jwkvam/jupyterlab_vim
 
 ## Jupyter To Python Round Trip ( JupyText)
 
-https://github.com/mwouts/jupytext
+<https://github.com/mwouts/jupytext>
 
 Use From the command line:
 
@@ -65,4 +64,3 @@ Resize Jupyter to window width
     mpl.rc("figure", figsize=(2*height_in_inches,height_in_inches))
 
 Useful incantations \* Igor's [Pandas Tips](https://github.com/idvorkin/techdiary/blob/master/notes/pandas-tutorial.md)
-
