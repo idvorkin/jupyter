@@ -1,0 +1,52 @@
+arrow
+altair
+ipython
+jupyter
+jupyterlab
+matplotlib
+matplotlib-venn
+pandas_datareader
+nbdime
+# numpy
+pandas
+pdfrw
+seaborn
+sklearn
+mypy
+nltk
+wordcloud
+spacy
+jupytext
+# Busted on py 3.9
+##################
+# swifter
+# numba
+# pandas-profiling
+humanize
+lime
+sympy
+bs4
+jupyterlab-vim
+dask
+fsspec
+numpy
+opencv-python
+pillow
+icecream
+imutils
+tensorflow
+imgaug
+pixellib
+# For VS Code editor
+#   - linter: prospector
+#   - refactoring: rope
+#   - autoformat: yapf
+##############################
+# prospector
+rope
+yapf
+pylint
+black
+pylama
+mypy
+
