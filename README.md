@@ -10,9 +10,18 @@ A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/gi
 jupyter labextension install @jupyterlab/toc
 jupyter labextension install jupyterlab_vim
 jupyter labextension install jupyterlab-jupytext
-
-
 ```
+
+### CPU limiting
+
+Sometimes jupyter will take all the CPU and drop my ssh session.
+Install cpulimit and run jupyter lab with it
+
+    cpulimit -l 90 jupyter lab
+
+### Variable Inspector
+
+[https://github.com/lckr/jupyterlab-variableInspector]
 
 ## Authoring Tips
 
