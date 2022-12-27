@@ -30,7 +30,11 @@ Install cpulimit and run jupyter lab with it
 ## Vim usage jupyter-lab
 
 V2 of the jupyter shell will be jupyter-lab. They have a seperate VIM plugin:
-<https://github.com/jwkvam/jupyterlab_vim>
+<https://github.com/jupyterlab-contrib/jupyterlab-vim>
+
+Install via
+
+    pip install --upgrade jupyterlab-vim
 
 ## Jupyter diff tools
 
