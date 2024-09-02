@@ -1,14 +1,23 @@
-# Uncategorized Jupyter notebooks
+# My random jupyter notebooks - to be updated
 
 A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/github/idvorkin/jupyter) here.
 
 [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/idvorkin/jupyter?urlpath=lab)
 
+## Setup envinroment
+
+* See how I install/setup using uv [here](https://github.com/idvorkin/nlp/blob/98bd07cceaa458dfd351daa74cc080370bb447be/pyproject.toml?plain=1#L74)
+* Also have a pre-commit
+
+
 ## Good plugins
+
+
+* https://github.com/jupyterlab-contrib/jupyterlab-vim
+* https://github.com/jupyter/nbdime
 
 ```bash
 jupyter labextension install @jupyterlab/toc
-jupyter labextension install jupyterlab_vim
 jupyter labextension install jupyterlab-jupytext
 ```
 
@@ -27,18 +36,10 @@ Install cpulimit and run jupyter lab with it
 
 - [XKCD style graphs in matplotlib](http://nbviewer.jupyter.org/url/jakevdp.github.io/downloads/notebooks/XKCD_sketch_path.ipynb)
 
-## Vim usage jupyter-lab
-
-V2 of the jupyter shell will be jupyter-lab. They have a seperate VIM plugin:
-<https://github.com/jupyterlab-contrib/jupyterlab-vim>
-
-Install via
-
-    pip install --upgrade jupyterlab-vim
 
 ## Jupyter diff tools
 
-[nbdiff](https://github.com/jupyter/nbdime#installation) - Cool tool for graphical diff of notebooks.
+[nbdime/nbdif](https://github.com/jupyter/nbdime#installation) - Cool tool for graphical diff of notebooks.
 
 ## Jupyter To Python Round Trip ( JupyText)
 
@@ -49,7 +50,7 @@ Use From the command line:
     # Roundtrip and execute via black
     jupytext --sync --pipe black PlayNLP.ipynb
 
-## Vim usage
+## Vim usage in jupyter lab
 
 - Useful Keyboard shortcuts
   - Tab to tab-complete
@@ -60,6 +61,30 @@ Use From the command line:
 - i -> insert mode in cell
 - O -> Create cell above
 - o -> create cell below
+
+Add this to your VIM config, to let  fj be escape
+
+```json
+{
+    "enabled": true,
+    "extraKeybindings": [
+        {
+            "context": "insert",
+            "mapfn": "map",
+            "enabled": true,
+            "command": "fj",
+            "keys": "<Esc>"
+        },
+        {
+            "command": "fk",
+            "keys": "<Shift-Esc>",
+            "context": "insert"
+        }
+    ],
+    "enabledInEditors": true
+}
+
+```
 
 Use ssh to expose a remote server to localhost using ssh
 

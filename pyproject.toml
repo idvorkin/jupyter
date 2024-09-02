@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "your-project-name"
+version = "0.1.0"
+description = "Your project description"
+requires-python = ">=3.10"
+
+dependencies = [
+    "arrow",
+    "altair",
+    "ipython",
+    "jupyter",
+    "jupyterlab",
+    "matplotlib",
+    "matplotlib-venn",
+    "pandas_datareader",
+    "nbdime",
+    "pandas",
+    "pdfrw",
+    "seaborn",
+    "scikit-learn",
+    "mypy",
+    "nltk",
+    "wordcloud",
+    "spacy",
+    "jupytext",
+    "humanize",
+    "lime",
+    "sympy",
+    "beautifulsoup4",
+    "jupyterlab-vim",
+    "dask",
+    "fsspec",
+    "numpy",
+    "opencv-python",
+    "pillow",
+    "icecream",
+    "imutils",
+    "imgaug",
+    "pixellib",
+]
+
+[tool.pyright]
+# ...
+venvPath = "."
+venv = ".venv"
+
+[tool.uv]
+dev-dependencies = [
+    "jupyterlab>=4.2",
+    "jupyterlab-lsp",
+    "jupyter_contrib_nbextensions",
+    "nbdime",
+    "pytest",
+]
