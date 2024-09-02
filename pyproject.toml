@@ -1,19 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "your-project-name"
+name = "idvorkin-jupyter"
 version = "0.1.0"
 description = "Your project description"
 requires-python = ">=3.10"
+
 
 dependencies = [
     "arrow",
     "altair",
     "ipython",
-    "jupyter",
-    "jupyterlab",
     "matplotlib",
     "matplotlib-venn",
     "pandas_datareader",
@@ -31,7 +30,6 @@ dependencies = [
     "lime",
     "sympy",
     "beautifulsoup4",
-    "jupyterlab-vim",
     "dask",
     "fsspec",
     "numpy",
@@ -43,6 +41,9 @@ dependencies = [
     "pixellib",
 ]
 
+[tool.setuptools]
+py-modules = ["PlayNLP"]
+
 [tool.pyright]
 # ...
 venvPath = "."
@@ -50,6 +51,8 @@ venv = ".venv"
 
 [tool.uv]
 dev-dependencies = [
+    "jupyter",
+    "jupyterlab-vim",
     "jupyterlab>=4.2",
     "jupyterlab-lsp",
     "jupyter_contrib_nbextensions",
