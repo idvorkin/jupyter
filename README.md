@@ -6,15 +6,13 @@ A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/gi
 
 ## Setup envinroment
 
-* See how I install/setup using uv [here](https://github.com/idvorkin/nlp/blob/98bd07cceaa458dfd351daa74cc080370bb447be/pyproject.toml?plain=1#L74)
-* Also have a pre-commit
-
+- See how I install/setup pyproject.toml
+- Also see the .pre-commit.yaml
 
 ## Good plugins
 
-
-* https://github.com/jupyterlab-contrib/jupyterlab-vim
-* https://github.com/jupyter/nbdime
+- https://github.com/jupyterlab-contrib/jupyterlab-vim
+- https://github.com/jupyter/nbdime
 
 ```bash
 jupyter labextension install @jupyterlab/toc
@@ -36,10 +34,15 @@ Install cpulimit and run jupyter lab with it
 
 - [XKCD style graphs in matplotlib](http://nbviewer.jupyter.org/url/jakevdp.github.io/downloads/notebooks/XKCD_sketch_path.ipynb)
 
-
 ## Jupyter diff tools
 
 [nbdime/nbdif](https://github.com/jupyter/nbdime#installation) - Cool tool for graphical diff of notebooks.
+
+Often I just want to see the code that changed:
+
+```zsh
+alias nbdiffcode="nbdiff --ignore-metadata --ignore-details --ignore-output"
+```
 
 ## Jupyter To Python Round Trip ( JupyText)
 
@@ -62,28 +65,27 @@ Use From the command line:
 - O -> Create cell above
 - o -> create cell below
 
-Add this to your VIM config, to let  fj be escape
+Add this to your VIM config, to let fj be escape
 
 ```json
 {
-    "enabled": true,
-    "extraKeybindings": [
-        {
-            "context": "insert",
-            "mapfn": "map",
-            "enabled": true,
-            "command": "fj",
-            "keys": "<Esc>"
-        },
-        {
-            "command": "fk",
-            "keys": "<Shift-Esc>",
-            "context": "insert"
-        }
-    ],
-    "enabledInEditors": true
+  "enabled": true,
+  "extraKeybindings": [
+    {
+      "context": "insert",
+      "mapfn": "map",
+      "enabled": true,
+      "command": "fj",
+      "keys": "<Esc>"
+    },
+    {
+      "command": "fk",
+      "keys": "<Shift-Esc>",
+      "context": "insert"
+    }
+  ],
+  "enabledInEditors": true
 }
-
 ```
 
 Use ssh to expose a remote server to localhost using ssh
