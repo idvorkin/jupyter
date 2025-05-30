@@ -14,6 +14,7 @@ build/
 develop-eggs/
 dist/
 downloads/
+wandb/
 eggs/
 .eggs/
 lib/
@@ -35,6 +36,7 @@ var/
 pip-log.txt
 pip-delete-this-directory.txt
 
+blog.chroma.db/
 # Unit test / coverage reports
 htmlcov/
 .tox/
@@ -93,3 +95,10 @@ tags
 
 # End of https://www.gitignore.io/api/vim
 .aider*
+.env
+.specstory/
+
+# Private individual user cursor rules
+.cursor/rules/_*.mdc
+# SpecStory explanation file
+.specstory/.what-is-this.md
