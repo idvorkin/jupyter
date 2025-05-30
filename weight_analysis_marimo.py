@@ -43,40 +43,107 @@ def _():
     ## Getting and preparing the input file
     # Export data using HealthAutoExport
     # *********************************************************************************************************************
-    # NOTE: There is a trailing comma on the csv on the export file --> SO: You need to add a junk column in the header
+    # Using the comprehensive JSON export which has more recent and complete weight data
     # *********************************************************************************************************************
-    # exported_and_trandformed_csv_file = "data/metrics-2024-03-08.csv"
-    # exported_and_trandformed_csv_file = "data/metrics-2024-09-01.csv"
-    exported_and_trandformed_csv_file = "data/metrics-2025-05-27.csv"
-    return (exported_and_trandformed_csv_file,)
+    exported_json_file = "data/HealthAutoExport-2010-03-03-2025-05-30.json"
+    # Legacy CSV files (keeping for reference):
+    # exported_and_trandformed_csv_file = "data/metrics-2024-09-01.csv"  # This file has weight data
+    # exported_and_trandformed_csv_file = "data/metrics-2025-05-27.csv"  # This file has no weight data
+    return (exported_json_file,)
 
 
 @app.cell
-def _(arrow, exported_and_trandformed_csv_file, np, pd):
-    df = pd.read_csv(exported_and_trandformed_csv_file, sep=",")
-    idx_weight, _min_weight = ("Weight/Body Mass (lb)", 140)
+def _(arrow, exported_json_file, np, pd):
+    import json
+
+    # Load JSON data
+    print(f"Loading JSON data from: {exported_json_file}")
+    with open(exported_json_file, "r") as f:
+        health_data = json.load(f)
+
+    # Extract weight data from JSON structure
+    metrics = health_data["data"]["metrics"]
+    weight_metric = None
+    for health_metric in metrics:
+        if health_metric["name"] == "weight_body_mass":
+            weight_metric = health_metric
+            break
+
+    # Initialize variables
+    idx_weight = "Weight"
     idx_date = "Date"
-    df[idx_date] = pd.to_datetime(df[idx_date])
-    df = df.set_index(df[idx_date])
-    df = df.sort_index()
+    _min_weight = 140
     idx_month_year = "month_year"
-    df[idx_month_year] = df.index.to_series().apply(
-        lambda t: arrow.get(t).format("MMM-YY")
-    )
     idx_week_year = "week_year"
-    df[idx_week_year] = df.index.to_series().apply(
-        lambda t: f"{t.week}-{t.year - 2000}"
-    )
     idx_quarter_year = "quarter_year"
-    df[idx_quarter_year] = df.index.to_series().apply(
-        lambda t: arrow.get(t).ceil("quarter").format("MMM-YY")
-    )
-    df = df.replace(0, np.nan)
-    df = df[df.index > "2010-01-01"]
-    df = df[df[idx_weight] > _min_weight]
-    dfW = df[idx_weight]
-    df_alltime = df
-    # display(df)
+
+    if weight_metric is None:
+        print("No weight data found in JSON!")
+        # Create empty data structures
+        df = pd.DataFrame()
+        dfW = pd.Series(dtype="float64", index=pd.DatetimeIndex([]))
+        df_alltime = df
+    else:
+        # Convert weight data to DataFrame
+        weight_records = []
+        for record in weight_metric["data"]:
+            weight_records.append({"Date": record["date"], "Weight": record["qty"]})
+
+        df = pd.DataFrame(weight_records)
+        print(f"Loaded {len(df)} weight records from JSON")
+
+        # Parse dates - they have timezone info
+        df[idx_date] = pd.to_datetime(df[idx_date], errors="coerce", utc=True)
+        df = df.dropna(subset=[idx_date])
+        print(f"After date parsing: {len(df)} rows")
+
+        if len(df) > 0:
+            print(f"Date range: {df[idx_date].min()} to {df[idx_date].max()}")
+            print(
+                f"Weight range: {df[idx_weight].min():.1f} to {df[idx_weight].max():.1f} lbs"
+            )
+
+            df = df.set_index(df[idx_date])
+            df = df.sort_index()
+
+            # Clean the data
+            df = df.replace(0, np.nan)
+            df = df[df.index > pd.to_datetime("2010-01-01", utc=True)]
+            print(f"After 2010 filter: {len(df)} rows")
+
+            df = df.dropna(subset=[idx_weight])
+            print(f"After dropna weights: {len(df)} rows")
+
+            df = df[df[idx_weight] > _min_weight]
+            print(f"After weight > {_min_weight} filter: {len(df)} rows")
+
+            if len(df) > 0:
+                df[idx_month_year] = df.index.to_series().apply(
+                    lambda t: arrow.get(t).format("MMM-YY") if pd.notna(t) else None
+                )
+                df[idx_week_year] = df.index.to_series().apply(
+                    lambda t: f"{t.week}-{t.year - 2000}" if pd.notna(t) else None
+                )
+                df[idx_quarter_year] = df.index.to_series().apply(
+                    lambda t: arrow.get(t).ceil("quarter").format("MMM-YY")
+                    if pd.notna(t)
+                    else None
+                )
+
+                dfW = df[idx_weight].copy()
+                dfW.index = df.index
+                df_alltime = df
+            else:
+                dfW = pd.Series(
+                    dtype="float64", name=idx_weight, index=pd.DatetimeIndex([])
+                )
+                df_alltime = df
+        else:
+            dfW = pd.Series(
+                dtype="float64", name=idx_weight, index=pd.DatetimeIndex([])
+            )
+            df_alltime = df
+
     return (
         df,
         dfW,
@@ -87,12 +154,6 @@ def _(arrow, exported_and_trandformed_csv_file, np, pd):
         idx_week_year,
         idx_weight,
     )
-
-
-@app.cell
-def _(df):
-    df
-    return
 
 
 @app.cell
@@ -159,7 +220,7 @@ def _(
     idx_week_year,
     pd,
 ):
-    _earliest = df.iloc[-1].Date - pd.DateOffset(years=2)
+    _earliest = df.index[-1] - pd.DateOffset(years=2)  # Use index instead of .Date
     display(_earliest)
     box_plot_weight = box_plot_weight_mpl
     box_plot_weight(df[_earliest:], idx_month_year, title="Recent weight by month")
@@ -221,7 +282,7 @@ def _(alt, df, display, idx_date, idx_weight, pd):
         display(c)
         return c
 
-    _earliest = df.iloc[-1].Date - pd.DateOffset(years=1)
+    _earliest = df.index[-1] - pd.DateOffset(years=1)  # Use index instead of .Date
     graph_weight_as_line(df[_earliest:], "Week", (180, 205))
     for freq in "Month Week".split():
         graph_weight_as_line(df, freq, (150, 240))
@@ -244,6 +305,7 @@ def _(HTML, animation, dfM, plt, timedelta):
     fig = plt.figure(figsize=anim_fig_size)
     ax = fig.add_subplot(1, 1, 1)
     dfRelevant = dfM[f"{anim_year_base}" : f"{anim_year_base + years_to_plot}"]
+
     _min_weight = dfRelevant.min() - 5
     max_weight = dfRelevant.max() + 5
     dfM[f"{anim_year_base}" : f"{anim_year_base}"].plot(
@@ -275,41 +337,6 @@ def _(HTML, animation, dfM, plt, timedelta):
 @app.cell
 def _(dfM):
     dfM.min()
-    return
-
-
-@app.cell
-def _():
-    from pandasai import PandasAI
-    from pandasai.llm.openai import OpenAI
-
-    return OpenAI, PandasAI
-
-
-@app.cell
-def _(OpenAI, PandasAI, pd):
-    def setup_gpt():
-        import os
-        import json
-
-        PASSWORD = "replaced_from_secret_box"
-        with open(os.path.expanduser("~/gits/igor2/secretBox.json")) as json_data:
-            SECRETS = json.load(json_data)
-            PASSWORD = SECRETS["openai"]
-        return PASSWORD
-
-    model = "gpt-3.5-turbo"
-    llm = OpenAI(setup_gpt(), model=model)
-    pandas_ai = PandasAI(llm, verbose=True)
-    exported_and_trandformed_csv_file_1 = "data/weight.csv"
-    df_1 = pd.read_csv(exported_and_trandformed_csv_file_1)
-    pandas_ai.run(df_1, "Remove rows with weights less then 100 from", show_code=True)
-    pandas_ai.run(df_1, prompt="What is the average weight?", show_code=False)
-    return
-
-
-@app.cell
-def _():
     return
 
 
