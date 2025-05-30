@@ -1,33 +1,14 @@
-from typing import List, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import pandas as pd
 import numpy as np
 
-import matplotlib.pyplot as plt
-import matplotlib
-
-import glob
-import os
-from pathlib import Path
 
 # get nltk and corpus
-import nltk
-from nltk.corpus import stopwords
 
 # get scapy and corpus
-import spacy
-import time
-from functools import lru_cache
-import seaborn as sns
-import humanize
 # Currently broken on 3.9 ??
 # import swifter
 # import pandas_profiling
-import dask
-import dask.dataframe as dd
-from IPython.display import display
-from humanize import intcomma, intword
-from functools import partial
 from arrow import now
 import arrow
 
@@ -44,7 +25,7 @@ def toPercentForMonkeyPatch(appliable: any):
 
 
 # Monkey Patch some methods
-pd.core.series.Series.toPercent = toPercentNP # toPercentForMonkeyPatch
+pd.core.series.Series.toPercent = toPercentNP  # toPercentForMonkeyPatch
 
 
 @dataclass
@@ -62,4 +43,3 @@ def time_it(message):
 
 
 print("pandas util 0.02")
-
