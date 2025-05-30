@@ -68,6 +68,7 @@ target/
 node_modules/
 package-lock.json
 yarn.lock
+uv.lock
 vim
 
 # Created by https://www.gitignore.io/api/vim
