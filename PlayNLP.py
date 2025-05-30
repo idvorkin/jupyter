@@ -28,7 +28,7 @@ from pandas import DataFrame
 import matplotlib as mpl
 """
 
-from typing import List, Tuple
+from typing import List
 from dataclasses import dataclass
 import pandas as pd
 
@@ -45,10 +45,11 @@ from nltk.corpus import stopwords
 
 # get scapy and corpus
 import spacy
+from spacy import displacy
 import time
 from functools import lru_cache
 from pandas_util import time_it
-from matplotlib import animation, rc
+from matplotlib import animation
 from IPython.display import HTML
 from datetime import timedelta
 import itertools
@@ -99,7 +100,6 @@ class Corpus:
 
 @lru_cache(maxsize=100)
 def LoadCorpus(corpus_path: str) -> Corpus:
-
     # Hym consider memoizing this asweel..
     english_stop_words = set(stopwords.words("english"))
     all_stop_words = domain_stop_words | english_stop_words
@@ -187,7 +187,9 @@ def DocForCorpus(nlp, corpus: Corpus):
     print(
         f"initial words {len(corpus.initial_words)} remaining words {len(corpus.words)}"
     )
-    ti = time_it(f"Building corpus from {corpus.path} of len:{len(corpus.all_content)} ")
+    ti = time_it(
+        f"Building corpus from {corpus.path} of len:{len(corpus.all_content)} "
+    )
     # We use all_file_content not initial_words because we want to keep punctuation.
     doc_all = nlp(corpus.all_content)
 
@@ -211,15 +213,16 @@ def DocForCorpus(nlp, corpus: Corpus):
 # Better model, read all files in paths and then do lookup.
 
 
-
 # Hymn better model:
 # A - lookup all files.
 # B - Generate paths based on actual locations.
+
 
 def glob750_latest(year, month):
     assert month in range(1, 13)
     base750 = "~/gits/igor2/750words/"
     return f"{base750}/{year}-{month:02}-*.md"
+
 
 def glob750_new_archive(year, month):
     assert month in range(1, 13)
@@ -244,16 +247,20 @@ corpus_path_months = {
 
 # 2018 Changes from old archive to new_archieve.
 # 2018 Jan/Feb/October don't have enough data for analysis
-corpus_path_months[2018] = [glob750_old_archive(2018, month) for month in range(3, 8)] + [
-    glob750_new_archive(2018, month) for month in (9, 11, 12)
-]
+corpus_path_months[2018] = [
+    glob750_old_archive(2018, month) for month in range(3, 8)
+] + [glob750_new_archive(2018, month) for month in (9, 11, 12)]
 
 corpus_path_months[2019] = [glob750_new_archive(2019, month) for month in range(1, 13)]
-corpus_path_months[2020] = [glob750_new_archive(2020, month) for month in range(1, 11)] # TBD compute month progratically
+corpus_path_months[2020] = [
+    glob750_new_archive(2020, month) for month in range(1, 11)
+]  # TBD compute month progratically
 
-corpus_path_months_trailing = [
-    glob750_new_archive(2018, month) for month in (9, 11, 12)
-] + corpus_path_months[2019] + corpus_path_months[2020]
+corpus_path_months_trailing = (
+    [glob750_new_archive(2018, month) for month in (9, 11, 12)]
+    + corpus_path_months[2019]
+    + corpus_path_months[2020]
+)
 
 corpus_path_months_trailing
 
@@ -278,6 +285,7 @@ print(f"initial words {len(corpus.initial_words)} remaining words {len(corpus.wo
 # fd = nltk.FreqDist(words)
 # fd.plot(50, percents=True)
 # Can also use scikit learn CountVectorizor
+
 
 # %%
 # Same as NLTK FreqDist, except normalized, includes cumsum, and colors
@@ -411,6 +419,7 @@ GraphWordDistribution([token.pos_ for token in doc], title=f"POS Distribution on
 #  * Build a data frame of word frequency "Proper Noun"x"Corpus"
 #  * Graph update every second.
 
+
 # %%
 def MakePDF(words, name):
     def ToPercent(x: float) -> float:
@@ -431,7 +440,7 @@ def PathToFriendlyTitle(path: str):
 # corpus_paths = corpus_path_months[2018]+corpus_path_months[2019]
 # corpus_paths = corpus_path_months[2018] + corpus_path_months[2019]
 corpus_paths = corpus_path_months_trailing[-12:]
-top_words_to_skip,   count_words   = 0, 10
+top_words_to_skip, count_words = 0, 10
 print(corpus_paths)
 pdfs = [
     MakePDF(GetInterestingForCorpusPath(p, "PROPN"), PathToFriendlyTitle(p))
@@ -454,42 +463,55 @@ wordByTimespan = wordByTimespan.sort_values("word_frequency", ascending=False)
 # Remove total column
 wordByTimespan = wordByTimespan.iloc[:, :-1]
 
-print (f"skipping:{top_words_to_skip}, count:{count_words} ")
+print(f"skipping:{top_words_to_skip}, count:{count_words} ")
 
 # wordByTimespan.iloc[:50, :].plot( kind="bar", subplots=False, legend=False, figsize=(15, 14), sharey=True )
-wordByTimespan.iloc[top_words_to_skip:top_words_to_skip + count_words, :].T.plot(
+wordByTimespan.iloc[top_words_to_skip : top_words_to_skip + count_words, :].T.plot(
     kind="bar", subplots=True, legend=False, figsize=(15, 9), sharey=True
 )
 # wordByTimespan.iloc[:13, :].T.plot( kind="bar", subplots=False, legend=True, figsize=(15, 14), sharey=True )
 
 # %%
-top_words_to_skip, count_words = 0,50
-top_word_by_year = wordByTimespan.iloc[top_words_to_skip:top_words_to_skip + count_words, :][::-1]
+top_words_to_skip, count_words = 0, 50
+top_word_by_year = wordByTimespan.iloc[
+    top_words_to_skip : top_words_to_skip + count_words, :
+][::-1]
 # top_word_by_year = wordByTimespan.iloc[:15,:][::-1] # the -1 on the end reverse the count
 
-anim_fig_size=(16,20)
+anim_fig_size = (16, 20)
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
-ax = top_word_by_year.iloc[:,0].plot(
-    title=f"Title Over Written", figsize=anim_fig_size,  kind='barh'
+ax = top_word_by_year.iloc[:, 0].plot(
+    title="Title Over Written", figsize=anim_fig_size, kind="barh"
 )
 
 animation.patches = ax.patches
-loop_colors = itertools.cycle('bgrcmk')
-animation.colors = list(itertools.islice(loop_colors,len(animation.patches)))
+loop_colors = itertools.cycle("bgrcmk")
+animation.colors = list(itertools.islice(loop_colors, len(animation.patches)))
 
 
-def animate(i, ):
+def animate(
+    i,
+):
     # OMG: That was impossible to find!!!
     # Turns out every time you call plot, more patches (bars) are added to graph.  You need to remove them, which is very non-obvious.
     # https://stackoverflow.com/questions/49791848/matplotlib-remove-all-patches-from-figure
     [p.remove() for p in reversed(animation.patches)]
-    top_word_by_year.iloc[:,i].plot(title=f"Distribution {top_word_by_year.columns[i]}", kind='barh', color=animation.colors , xlim=(0,10))
+    top_word_by_year.iloc[:, i].plot(
+        title=f"Distribution {top_word_by_year.columns[i]}",
+        kind="barh",
+        color=animation.colors,
+        xlim=(0, 10),
+    )
     return (animation.patches,)
 
 
 anim = animation.FuncAnimation(
-    fig, animate, frames=len(top_word_by_year.columns), interval=timedelta(seconds=1).seconds * 1000, blit=False
+    fig,
+    animate,
+    frames=len(top_word_by_year.columns),
+    interval=timedelta(seconds=1).seconds * 1000,
+    blit=False,
 )
 HTML(anim.to_html5_video())
 
@@ -501,7 +523,6 @@ doc = DocForCorpus(nlp, corpus)
 for t in doc[400:600]:
 print(f"{t} {t.lemma_} {t.pos_}")
 """
-from spacy import displacy
 
 displacy.render(nlp("Igor wonders if Ray is working too much"))
 
