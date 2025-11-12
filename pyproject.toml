@@ -38,7 +38,6 @@ dependencies = [
     "icecream",
     "imutils",
     "imgaug",
-    "pixellib",
 ]
 
 [tool.setuptools]
@@ -49,8 +48,8 @@ py-modules = ["PlayNLP"]
 venvPath = "."
 venv = ".venv"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "jupyter",
     "jupyterlab-vim",
     "jupyterlab>=4.2",
@@ -58,4 +57,6 @@ dev-dependencies = [
     "jupyter_contrib_nbextensions",
     "nbdime",
     "pytest",
+    "marimo",
+    "playwright>=1.56.0",
 ]
