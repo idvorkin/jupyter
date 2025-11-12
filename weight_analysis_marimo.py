@@ -402,9 +402,91 @@ def _(alt, df, display, idx_date, idx_weight, pd):
         display(c)
         return c
 
+    def graph_weight_overview_detail(df, freq):
+        """Create an overview + detail chart with brushing to zoom into time ranges"""
+        domain = make_domain(df)
+        # Map frequency names to pandas frequency codes
+        freq_map = {"Month": "ME", "Week": "W"}
+        pd_freq_value = freq_map.get(freq, freq[0])
+        df_group_time = df.copy()[metric].resample(pd_freq_value)
+        t1 = df_group_time.count().reset_index()
+        df_to_graph = t1.drop(columns=metric)
+        # Only calculate median (p50) for overview + detail chart
+        df_to_graph["p50.0"] = df_group_time.quantile(0.5).reset_index()[metric]
+        df_melted = df_to_graph.melt(id_vars=[idx_date])
+
+        # Create a brush selection on the overview chart
+        brush = alt.selection_interval(encodings=['x'])
+
+        # Base chart
+        base = alt.Chart(df_melted).mark_line(point=True).encode(
+            x=alt.X(f"{idx_date}:T", title="Date", axis=alt.Axis(format='%b %Y')),
+            y=alt.Y("value:Q", title="Weight (lbs)"),
+            color=alt.Color("variable:N", title="Percentile"),
+            tooltip=[alt.Tooltip(f"{idx_date}:T", format='%b %Y'), alt.Tooltip("value:Q")]
+        )
+
+        # Detail chart (top) - shows zoomed view based on brush selection
+        detail = base.encode(
+            x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush), title="Date", axis=alt.Axis(format='%b %Y')),
+            y=alt.Y("value:Q", scale=alt.Scale(domain=domain))
+        ).properties(
+            width="container",
+            height=400,
+            title=f"{metric} By {freq} - Detail View (brush below to zoom)"
+        )
+
+        # Add tirzepatide marker to detail view
+        tirzepatide_date = pd.Timestamp("2024-02-01", tz="UTC")
+        rule_detail = (
+            alt.Chart(pd.DataFrame({idx_date: [tirzepatide_date]}))
+            .mark_rule(color="red", strokeDash=[5, 5], size=2)
+            .encode(x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush)))
+        )
+
+        text_detail = (
+            alt.Chart(
+                pd.DataFrame(
+                    {idx_date: [tirzepatide_date], "label": ["Started Tirzepatide"]}
+                )
+            )
+            .mark_text(align="left", dx=5, dy=-10, color="red", fontSize=12)
+            .encode(x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush)), text="label")
+        )
+
+        # Overview chart (bottom) - shows full timeline with brush selection
+        overview = base.encode(
+            x=alt.X(f"{idx_date}:T", title="Date", axis=alt.Axis(format='%b %Y')),
+            y=alt.Y("value:Q", scale=alt.Scale(domain=domain), axis=alt.Axis(tickCount=3))
+        ).add_params(
+            brush
+        ).properties(
+            width="container",
+            height=80,
+            title="Overview - Drag to select time range"
+        )
+
+        # Add tirzepatide marker to overview
+        rule_overview = (
+            alt.Chart(pd.DataFrame({idx_date: [tirzepatide_date]}))
+            .mark_rule(color="red", strokeDash=[5, 5], size=1)
+            .encode(x=f"{idx_date}:T")
+        )
+
+        # Combine detail and overview vertically
+        combined = alt.vconcat(
+            detail + rule_detail + text_detail,
+            overview + rule_overview
+        ).resolve_scale(
+            color='shared'
+        )
+
+        display(combined)
+        return combined
+
     _earliest = df.index[-1] - pd.DateOffset(years=1)  # Use index instead of .Date
     graph_weight_as_line(df[_earliest:], "Week", (180, 205))
-    return (graph_weight_as_line,)
+    return (graph_weight_as_line, graph_weight_overview_detail)
 
 
 @app.cell
@@ -416,6 +498,23 @@ def _(df, graph_weight_as_line):
 @app.cell
 def _(df, graph_weight_as_line):
     graph_weight_as_line(df, "Week", (150, 240))
+    return
+
+
+@app.cell
+def _(df, graph_weight_overview_detail, mo):
+    mo.md(r"""
+    ## Interactive Overview + Detail Chart
+
+    This chart uses the Vega-Lite overview + detail pattern. **Drag on the bottom overview chart** to select a time range and zoom into the detail view above.
+    """)
+    return
+
+
+@app.cell
+def _(df, graph_weight_overview_detail):
+    # Create overview + detail chart for all-time data by month
+    graph_weight_overview_detail(df, "Month")
     return
 
 
