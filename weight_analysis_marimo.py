@@ -1,7 +1,19 @@
+# /// script
+# [tool.marimo]
+# version = "0.17.7"
+#
+# [tool.marimo.runtime]
+# auto_instantiate = true
+# on_cell_change = "autorun"
+# ///
+
 import marimo
 
 __generated_with = "0.17.7"
-app = marimo.App(width="full")
+app = marimo.App(
+    width="full",
+    app_title="Igor's Weight Analysis",
+)
 
 
 @app.cell
@@ -9,13 +21,17 @@ def _(mo):
     mo.md(r"""
     # Igor's Weight Tracking and Plotting Playground
 
+    <div style="background-color: #ff4444; color: white; padding: 20px; border-radius: 8px; margin: 20px 0; font-size: 16px; font-weight: bold; text-align: center; border: 3px solid #cc0000;">
+        ⚠️ CLICK THE RUN BUTTON (▶️) IN THE BOTTOM RIGHT CORNER TO START THE NOTEBOOK ⚠️
+    </div>
+
     Back in the day, I wanted to learn matplotlib and visualization in Python. What better way to practice than with a fun, personal use case?
     This notebook started as a Jupyter playground for tracking my weight data and experimenting with different plotting techniques.
 
     Over time, it's evolved from basic matplotlib plots to include seaborn, Altair (Vega-Lite), and now runs in marimo instead of Jupyter.
     It's been a great way to learn data visualization while keeping tabs on my health journey!
 
-    **Historical Note:** This notebook was originally created as [`Weight Analysis.ipynb`](Weight%20Analysis.ipynb).
+    **Historical Note:** This notebook was originally created as [`Weight Analysis.ipynb`](https://github.com/idvorkin/jupyter/blob/b9080bc1980b5e13db6972b68bab145add0457f6/Weight%20Analysis.ipynb).
     That Jupyter version is now deprecated - please use this marimo version instead for better reactivity, cleaner diffs, and a more modern experience.
     """)
     return
@@ -38,32 +54,94 @@ def _():
     import altair as alt
     import marimo as mo
 
+    # Suppress narwhals/altair compatibility warnings
+    import warnings
+
+    warnings.filterwarnings(
+        "ignore",
+        message=r"You passed a `<class 'narwhals\.stable\.v1\.DataFrame'>` to `is_pandas_dataframe`.",
+    )
+
     # '%matplotlib inline' command supported automatically in marimo
     return alt, animation, arrow, display, mo, mpl, np, pd, plt, sns, timedelta
 
 
 @app.cell
 def _():
+    import json
+    import os
+    import sys
+
+    def load_data_file(filename):
+        """
+        Load data file by trying multiple paths in order:
+        1. Local relative path (data/filename)
+        2. Local absolute paths (various common locations)
+        3. GitHub raw URL
+
+        This enables the notebook to work both locally and in WASM/browser environments.
+
+        Args:
+            filename: Name of the data file (e.g., "HealthAutoExport-2010-03-03-2025-05-30.json")
+
+        Returns:
+            Parsed JSON data
+        """
+        # Check if we're running in a WASM/Pyodide environment
+        is_wasm = "pyodide" in sys.modules
+
+        # Define paths to try in order
+        local_paths = [
+            f"data/{filename}",
+            f"/home/developer/gits/jupyter/data/{filename}",
+            f"./{filename}",
+            filename,
+        ]
+
+        github_url = (
+            f"https://raw.githubusercontent.com/idvorkin/jupyter/master/data/{filename}"
+        )
+
+        # Try local paths first (skip if in WASM)
+        if not is_wasm:
+            for path in local_paths:
+                if os.path.exists(path):
+                    print(f"✓ Loading data from local file: {path}")
+                    with open(path, "r") as f:
+                        return json.load(f)
+                else:
+                    print(f"✗ Not found: {path}")
+
+        # Fall back to GitHub (works in both local and WASM)
+        print(f"→ Loading data from GitHub: {github_url}")
+        try:
+            import urllib.request
+
+            with urllib.request.urlopen(github_url) as response:
+                data = json.loads(response.read().decode())
+                print("✓ Successfully loaded from GitHub")
+                return data
+        except Exception as e:
+            print(f"✗ Failed to load from GitHub: {e}")
+            raise
+
     ## Getting and preparing the input file
     # Export data using HealthAutoExport
     # *********************************************************************************************************************
     # Using the comprehensive JSON export which has more recent and complete weight data
     # *********************************************************************************************************************
-    exported_json_file = "data/HealthAutoExport-2010-03-03-2025-05-30.json"
+    data_filename = "HealthAutoExport-2010-03-03-2025-05-30.json"
+
     # Legacy CSV files (keeping for reference):
     # exported_and_trandformed_csv_file = "data/metrics-2024-09-01.csv"  # This file has weight data
     # exported_and_trandformed_csv_file = "data/metrics-2025-05-27.csv"  # This file has no weight data
-    return (exported_json_file,)
+    return (data_filename, load_data_file)
 
 
 @app.cell
-def _(arrow, exported_json_file, np, pd):
-    import json
-
-    # Load JSON data
-    print(f"Loading JSON data from: {exported_json_file}")
-    with open(exported_json_file, "r") as f:
-        health_data = json.load(f)
+def _(arrow, data_filename, load_data_file, np, pd):
+    # Load JSON data (tries local paths first, then GitHub)
+    health_data = load_data_file(data_filename)
 
     # Extract weight data from JSON structure
     metrics = health_data["data"]["metrics"]

@@ -71,6 +71,9 @@ yarn.lock
 uv.lock
 vim
 
+# Marimo WASM build output
+public/
+
 # Created by https://www.gitignore.io/api/vim
 # Edit at https://www.gitignore.io/?templates=vim
 
