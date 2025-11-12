@@ -25,6 +25,8 @@ def _(mo):
         ⚠️ CLICK THE RUN BUTTON (▶️) IN THE BOTTOM RIGHT CORNER TO START THE NOTEBOOK ⚠️
     </div>
 
+    **🌐 Live Demo:** This notebook is deployed as an interactive WASM app at [weight-analysis.surge.sh](https://weight-analysis.surge.sh) - runs entirely in your browser!
+
     Back in the day, I wanted to learn matplotlib and visualization in Python. What better way to practice than with a fun, personal use case?
     This notebook started as a Jupyter playground for tracking my weight data and experimenting with different plotting techniques.
 
@@ -243,17 +245,18 @@ def _(alt, display, idx_weight, mpl, plt, sns):
         # In theory can use plot.ly (not free)  or Bokeh (not mpl compatible) but issues. So setting dimensions old school.
         # Manually setting the weight and width - using larger sizes for full width display
         height_in_inches = 10
-        mpl.rc("figure", figsize=(20, height_in_inches))
+        fig, ax = plt.subplots(figsize=(20, height_in_inches))
 
         # Create a custom color palette
         palette = sns.color_palette("husl", len(df[x].unique()))
-        # Rotate x-axis labels for better readability
-        plt.xticks(rotation=45, ha="right")
 
         # Create the boxplot with the custom palette
-        ax = sns.boxplot(
-            x=x, y=idx_weight, data=df, palette=palette, hue=x, legend=False
+        sns.boxplot(
+            x=x, y=idx_weight, data=df, palette=palette, hue=x, legend=False, ax=ax
         )
+
+        # Rotate x-axis labels for better readability
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
 
         # Set title and labels with improved styling
         ax.set_title(title, fontsize=16, fontweight="bold")
@@ -264,8 +267,8 @@ def _(alt, display, idx_weight, mpl, plt, sns):
         sns.set_style("whitegrid")
         plt.tight_layout()
 
-        # Show the plot
-        plt.show()
+        # Return the figure for marimo to display
+        return fig
 
     def box_plot_weight_vegas(df, x, title, domain=(150, 250)):
         height_in_inches = 600  # Larger height for better visibility
@@ -293,19 +296,23 @@ def _(
     box_plot_weight_mpl,
     df,
     df_alltime,
-    display,
     idx_month_year,
     idx_quarter_year,
     idx_week_year,
+    mo,
     pd,
 ):
     _earliest = df.index[-1] - pd.DateOffset(years=2)  # Use index instead of .Date
-    display(_earliest)
     box_plot_weight = box_plot_weight_mpl
-    box_plot_weight(df[_earliest:], idx_month_year, title="Recent weight by month")
-    box_plot_weight(df[_earliest:], idx_week_year, title="Recent weight by week")
-    box_plot_weight(df_alltime, idx_month_year, "Weight by Month")
-    box_plot_weight(df_alltime, idx_quarter_year, "Weight by Quarter")
+
+    # Create all boxplots and display them
+    _fig1 = box_plot_weight(df[_earliest:], idx_month_year, title="Recent weight by month")
+    _fig2 = box_plot_weight(df[_earliest:], idx_week_year, title="Recent weight by week")
+    _fig3 = box_plot_weight(df_alltime, idx_month_year, "Weight by Month")
+    _fig4 = box_plot_weight(df_alltime, idx_quarter_year, "Weight by Quarter")
+
+    # Display all figures vertically
+    mo.vstack([_fig1, _fig2, _fig3, _fig4])
     return
 
 
@@ -442,9 +449,14 @@ def _(animation, dfM, mo, plt, timedelta):
 
     def animate(i):
         year = f"{anim_year_base + i}"
-        return (
-            dfM[f"{anim_year_base}" : year].plot(title=f"Weight through {year}").lines
+        ax.clear()
+        dfM[f"{anim_year_base}" : year].plot(
+            title=f"Weight through {year}",
+            ylim=(_min_weight, max_weight),
+            ax=ax
         )
+        ax.set_ylabel("lbs")
+        ax.set_xlabel("")
 
     anim = animation.FuncAnimation(
         fig,
@@ -454,8 +466,8 @@ def _(animation, dfM, mo, plt, timedelta):
         blit=False,
     )
     # Use to_jshtml() instead of to_html5_video() - works in browser without ffmpeg
+    # Return the HTML output so marimo displays it
     mo.Html(anim.to_jshtml())
-    return
 
 
 @app.cell
