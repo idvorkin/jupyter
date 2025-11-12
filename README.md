@@ -4,6 +4,10 @@ A place for my jupyter notebooks, see them [live](http://nbviewer.jupyter.org/gi
 
 [![Binder](http://mybinder.org/badge.svg)](http://mybinder.org/repo/idvorkin/jupyter?urlpath=lab)
 
+## Interactive Demos
+
+**[Weight Analysis (Marimo WASM)](https://weight-analysis.surge.sh)** - Interactive weight tracking and visualization running entirely in your browser with Python WASM. Features matplotlib boxplots, Altair charts, and animated weight progression.
+
 ## Most important
 
 I think, most important, editting in VS.Code is now good enough - w00t! (Not sure what plugins is making it so)
