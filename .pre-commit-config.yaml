@@ -27,6 +27,7 @@ repos:
       - id: prettier
         name: Prettier (Markdown & HTML only)
         files: \.(md|html)$
+        exclude: ^public/
 
   # 🔧 Dasel: YAML and JSON schema/structure validator
   - repo: https://github.com/TomWright/dasel
@@ -35,6 +36,7 @@ repos:
       - id: dasel-validate
         name: Dasel YAML/JSON Validator
         files: \.(json|yaml|yml)$
+        exclude: ^public/
 
   # 🔧 Local fast tests
   - repo: local
