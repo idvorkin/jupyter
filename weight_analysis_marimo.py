@@ -67,14 +67,63 @@ def _():
 @app.cell
 def _():
     import os
+    import sys
 
-    # CSV data file with merged historical weight data
+    def load_data_file(filename):
+        """
+        Load data file by trying multiple paths in order:
+        1. Local relative path (data/filename)
+        2. Local absolute paths (various common locations)
+        3. GitHub raw URL (fallback for WASM/browser environments)
+
+        This enables the notebook to work in three environments:
+        - Local development (tries local paths first)
+        - WASM/Pyodide (browser-based marimo, uses GitHub URL)
+        - Deployed environments (GitHub fallback)
+
+        The GitHub fallback is essential for the WASM deployment at weight-analysis.surge.sh
+        which runs entirely in the browser and cannot access local files.
+
+        Args:
+            filename: Name of the data file (e.g., "HealthAutoExport-2010-03-03-2025-11-15.csv")
+
+        Returns:
+            Path to the loaded CSV file (for local) or None (will load from URL)
+        """
+        # Check if we're running in a WASM/Pyodide environment
+        is_wasm = "pyodide" in sys.modules
+
+        # Define paths to try in order
+        local_paths = [
+            f"data/{filename}",
+            f"/home/developer/gits/jupyter/data/{filename}",
+            f"./{filename}",
+            filename,
+        ]
+
+        # Try local paths first (skip if in WASM)
+        if not is_wasm:
+            for path in local_paths:
+                if os.path.exists(path):
+                    print(f"✓ Loading data from local file: {path}")
+                    return path
+
+        # Fall back to GitHub URL for WASM/browser environments
+        github_url = (
+            f"https://raw.githubusercontent.com/idvorkin/jupyter/master/data/{filename}"
+        )
+        print(f"→ Loading data from GitHub: {github_url}")
+        return github_url
+
+    # CSV data file with merged historical weight data (2015-2025, 3,853 records)
+    # This replaces the previous JSON-based approach
     data_filename = "HealthAutoExport-2010-03-03-2025-11-15.csv"
-    return data_filename, os
+
+    return data_filename, load_data_file, os, sys
 
 
 @app.cell
-def _(arrow, data_filename, np, os, pd):
+def _(arrow, data_filename, load_data_file, np, pd):
     # Initialize variables
     idx_weight = "Weight"
     idx_date = "Date"
@@ -83,29 +132,11 @@ def _(arrow, data_filename, np, os, pd):
     idx_week_year = "week_year"
     idx_quarter_year = "quarter_year"
 
-    # Load CSV data
-    print(f"Loading CSV file: {data_filename}")
-    local_paths = [
-        f"data/{data_filename}",
-        f"/home/developer/gits/jupyter/data/{data_filename}",
-        f"./{data_filename}",
-        data_filename,
-    ]
-
-    csv_path = None
-    for path in local_paths:
-        if os.path.exists(path):
-            csv_path = path
-            print(f"✓ Found CSV at: {csv_path}")
-            break
-
-    if csv_path:
-        df = pd.read_csv(csv_path)
-        df = df.rename(columns={"Date/Time": "Date", "Weight (lb)": "Weight"})
-        print(f"Loaded {len(df)} records from CSV")
-    else:
-        print(f"✗ CSV file not found: {data_filename}")
-        df = pd.DataFrame()
+    # Load CSV data (works locally and in WASM/browser via GitHub fallback)
+    csv_path = load_data_file(data_filename)
+    df = pd.read_csv(csv_path)
+    df = df.rename(columns={"Date/Time": "Date", "Weight (lb)": "Weight"})
+    print(f"Loaded {len(df)} records from CSV")
 
     # Parse dates and process data
     if len(df) > 0:
