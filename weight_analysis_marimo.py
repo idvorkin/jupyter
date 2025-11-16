@@ -9,11 +9,8 @@
 
 import marimo
 
-__generated_with = "0.17.7"
-app = marimo.App(
-    width="full",
-    app_title="Igor's Weight Analysis",
-)
+__generated_with = "0.17.8"
+app = marimo.App(width="full", app_title="Igor's Weight Analysis")
 
 
 @app.cell
@@ -48,7 +45,6 @@ def _():
 
     matplotlib.style.use("ggplot")
     import seaborn as sns
-    import matplotlib as mpl
     import arrow
     from matplotlib import animation
     from IPython.display import display
@@ -65,12 +61,11 @@ def _():
     )
 
     # '%matplotlib inline' command supported automatically in marimo
-    return alt, animation, arrow, display, mo, mpl, np, pd, plt, sns, timedelta
+    return alt, animation, arrow, display, mo, np, pd, plt, sns, timedelta
 
 
 @app.cell
 def _():
-    import json
     import os
     import sys
 
@@ -79,15 +74,21 @@ def _():
         Load data file by trying multiple paths in order:
         1. Local relative path (data/filename)
         2. Local absolute paths (various common locations)
-        3. GitHub raw URL
+        3. GitHub raw URL (fallback for WASM/browser environments)
 
-        This enables the notebook to work both locally and in WASM/browser environments.
+        This enables the notebook to work in three environments:
+        - Local development (tries local paths first)
+        - WASM/Pyodide (browser-based marimo, uses GitHub URL)
+        - Deployed environments (GitHub fallback)
+
+        The GitHub fallback is essential for the WASM deployment at weight-analysis.surge.sh
+        which runs entirely in the browser and cannot access local files.
 
         Args:
-            filename: Name of the data file (e.g., "HealthAutoExport-2010-03-03-2025-05-30.json")
+            filename: Name of the data file (e.g., "HealthAutoExport-2010-03-03-2025-11-15.csv")
 
         Returns:
-            Parsed JSON data
+            Path to the loaded CSV file (for local) or None (will load from URL)
         """
         # Check if we're running in a WASM/Pyodide environment
         is_wasm = "pyodide" in sys.modules
@@ -100,59 +101,29 @@ def _():
             filename,
         ]
 
-        github_url = (
-            f"https://raw.githubusercontent.com/idvorkin/jupyter/master/data/{filename}"
-        )
-
         # Try local paths first (skip if in WASM)
         if not is_wasm:
             for path in local_paths:
                 if os.path.exists(path):
                     print(f"✓ Loading data from local file: {path}")
-                    with open(path, "r") as f:
-                        return json.load(f)
-                else:
-                    print(f"✗ Not found: {path}")
+                    return path
 
-        # Fall back to GitHub (works in both local and WASM)
+        # Fall back to GitHub URL for WASM/browser environments
+        github_url = (
+            f"https://raw.githubusercontent.com/idvorkin/jupyter/master/data/{filename}"
+        )
         print(f"→ Loading data from GitHub: {github_url}")
-        try:
-            import urllib.request
+        return github_url
 
-            with urllib.request.urlopen(github_url) as response:
-                data = json.loads(response.read().decode())
-                print("✓ Successfully loaded from GitHub")
-                return data
-        except Exception as e:
-            print(f"✗ Failed to load from GitHub: {e}")
-            raise
+    # CSV data file with merged historical weight data (2015-2025, 3,853 records)
+    # This replaces the previous JSON-based approach
+    data_filename = "HealthAutoExport-2010-03-03-2025-11-15.csv"
 
-    ## Getting and preparing the input file
-    # Export data using HealthAutoExport
-    # *********************************************************************************************************************
-    # Using the comprehensive JSON export which has more recent and complete weight data
-    # *********************************************************************************************************************
-    data_filename = "HealthAutoExport-2010-03-03-2025-05-30.json"
-
-    # Legacy CSV files (keeping for reference):
-    # exported_and_trandformed_csv_file = "data/metrics-2024-09-01.csv"  # This file has weight data
-    # exported_and_trandformed_csv_file = "data/metrics-2025-05-27.csv"  # This file has no weight data
-    return (data_filename, load_data_file)
+    return data_filename, load_data_file, os, sys
 
 
 @app.cell
 def _(arrow, data_filename, load_data_file, np, pd):
-    # Load JSON data (tries local paths first, then GitHub)
-    health_data = load_data_file(data_filename)
-
-    # Extract weight data from JSON structure
-    metrics = health_data["data"]["metrics"]
-    weight_metric = None
-    for health_metric in metrics:
-        if health_metric["name"] == "weight_body_mass":
-            weight_metric = health_metric
-            break
-
     # Initialize variables
     idx_weight = "Weight"
     idx_date = "Date"
@@ -161,28 +132,30 @@ def _(arrow, data_filename, load_data_file, np, pd):
     idx_week_year = "week_year"
     idx_quarter_year = "quarter_year"
 
-    if weight_metric is None:
-        print("No weight data found in JSON!")
-        # Create empty data structures
-        df = pd.DataFrame()
-        dfW = pd.Series(dtype="float64", index=pd.DatetimeIndex([]))
-        df_alltime = df
-    else:
-        # Convert weight data to DataFrame
-        weight_records = []
-        for record in weight_metric["data"]:
-            weight_records.append({"Date": record["date"], "Weight": record["qty"]})
+    # Load CSV data (works locally and in WASM/browser via GitHub fallback)
+    csv_path = load_data_file(data_filename)
+    df = pd.read_csv(csv_path)
+    df = df.rename(columns={"Date/Time": "Date", "Weight (lb)": "Weight"})
+    print(f"Loaded {len(df)} records from CSV")
 
-        df = pd.DataFrame(weight_records)
-        print(f"Loaded {len(df)} weight records from JSON")
-
-        # Parse dates - they have timezone info
-        df[idx_date] = pd.to_datetime(df[idx_date], errors="coerce", utc=True)
+    # Parse dates and process data
+    if len(df) > 0:
+        df[idx_date] = pd.to_datetime(df[idx_date], errors="coerce")
         df = df.dropna(subset=[idx_date])
         print(f"After date parsing: {len(df)} rows")
 
+    # Process the data
+    if len(df) == 0:
+        dfW = pd.Series(dtype="float64", index=pd.DatetimeIndex([]))
+        df_alltime = df
+    else:
+        print(f"Date range: {df[idx_date].min()} to {df[idx_date].max()}")
+
+        # Filter and clean weight data
+        df = df.dropna(subset=[idx_weight])
+        print(f"After dropna weights: {len(df)} rows")
+
         if len(df) > 0:
-            print(f"Date range: {df[idx_date].min()} to {df[idx_date].max()}")
             print(
                 f"Weight range: {df[idx_weight].min():.1f} to {df[idx_weight].max():.1f} lbs"
             )
@@ -192,7 +165,7 @@ def _(arrow, data_filename, load_data_file, np, pd):
 
             # Clean the data
             df = df.replace(0, np.nan)
-            df = df[df.index > pd.to_datetime("2010-01-01", utc=True)]
+            df = df[df.index > pd.to_datetime("2010-01-01")]
             print(f"After 2010 filter: {len(df)} rows")
 
             df = df.dropna(subset=[idx_weight])
@@ -240,7 +213,7 @@ def _(arrow, data_filename, load_data_file, np, pd):
 
 
 @app.cell
-def _(alt, display, idx_weight, mpl, plt, sns):
+def _(alt, display, idx_weight, plt, sns):
     def box_plot_weight_mpl(df, x, title=""):
         # In theory can use plot.ly (not free)  or Bokeh (not mpl compatible) but issues. So setting dimensions old school.
         # Manually setting the weight and width - using larger sizes for full width display
@@ -256,7 +229,7 @@ def _(alt, display, idx_weight, mpl, plt, sns):
         )
 
         # Rotate x-axis labels for better readability
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
 
         # Set title and labels with improved styling
         ax.set_title(title, fontsize=16, fontweight="bold")
@@ -306,8 +279,12 @@ def _(
     box_plot_weight = box_plot_weight_mpl
 
     # Create all boxplots and display them
-    _fig1 = box_plot_weight(df[_earliest:], idx_month_year, title="Recent weight by month")
-    _fig2 = box_plot_weight(df[_earliest:], idx_week_year, title="Recent weight by week")
+    _fig1 = box_plot_weight(
+        df[_earliest:], idx_month_year, title="Recent weight by month"
+    )
+    _fig2 = box_plot_weight(
+        df[_earliest:], idx_week_year, title="Recent weight by week"
+    )
     _fig3 = box_plot_weight(df_alltime, idx_month_year, "Weight by Month")
     _fig4 = box_plot_weight(df_alltime, idx_quarter_year, "Weight by Quarter")
 
@@ -416,24 +393,54 @@ def _(alt, df, display, idx_date, idx_weight, pd):
         df_melted = df_to_graph.melt(id_vars=[idx_date])
 
         # Create a brush selection on the overview chart
-        brush = alt.selection_interval(encodings=['x'])
+        brush = alt.selection_interval(encodings=["x"])
 
         # Base chart
-        base = alt.Chart(df_melted).mark_line(point=True).encode(
-            x=alt.X(f"{idx_date}:T", title="Date", axis=alt.Axis(format='%b %Y')),
-            y=alt.Y("value:Q", title="Weight (lbs)"),
-            color=alt.Color("variable:N", title="Percentile"),
-            tooltip=[alt.Tooltip(f"{idx_date}:T", format='%b %Y'), alt.Tooltip("value:Q")]
+        base = (
+            alt.Chart(df_melted)
+            .mark_line(point=True)
+            .encode(
+                x=alt.X(f"{idx_date}:T", title="Date", axis=alt.Axis(format="%b %Y")),
+                y=alt.Y("value:Q", title="Weight (lbs)"),
+                color=alt.Color("variable:N", legend=None),  # Hide legend
+                tooltip=[
+                    alt.Tooltip(f"{idx_date}:T", format="%b %Y"),
+                    alt.Tooltip("value:Q"),
+                ],
+            )
         )
 
         # Detail chart (top) - shows zoomed view based on brush selection
-        detail = base.encode(
-            x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush), title="Date", axis=alt.Axis(format='%b %Y')),
-            y=alt.Y("value:Q", scale=alt.Scale(domain=domain))
-        ).properties(
-            width="container",
-            height=400,
-            title=f"{metric} By {freq} - Detail View (brush below to zoom)"
+        # Create left y-axis
+        detail_left = base.encode(
+            x=alt.X(
+                f"{idx_date}:T",
+                scale=alt.Scale(domain=brush),
+                title="Date",
+                axis=alt.Axis(format="%b %Y"),
+            ),
+            y=alt.Y("value:Q", scale=alt.Scale(domain=domain), title="Weight (lbs)"),
+        )
+
+        # Create invisible right y-axis
+        detail_right = base.mark_line(opacity=0).encode(
+            x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush), axis=None),
+            y=alt.Y(
+                "value:Q",
+                scale=alt.Scale(domain=domain),
+                title="",
+                axis=alt.Axis(orient="right"),
+            ),
+        )
+
+        detail = (
+            (detail_left + detail_right)
+            .properties(
+                width="container",
+                height=400,
+                title=f"{metric} By {freq} - Detail View (median p50) - brush below to zoom",
+            )
+            .resolve_scale(y="shared")
         )
 
         # Add tirzepatide marker to detail view
@@ -451,19 +458,32 @@ def _(alt, df, display, idx_date, idx_weight, pd):
                 )
             )
             .mark_text(align="left", dx=5, dy=-10, color="red", fontSize=12)
-            .encode(x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush)), text="label")
+            .encode(
+                x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush)), text="label"
+            )
         )
 
         # Overview chart (bottom) - shows full timeline with brush selection
-        overview = base.encode(
-            x=alt.X(f"{idx_date}:T", title="Date", axis=alt.Axis(format='%b %Y')),
-            y=alt.Y("value:Q", scale=alt.Scale(domain=domain), axis=alt.Axis(tickCount=3))
-        ).add_params(
-            brush
-        ).properties(
-            width="container",
-            height=80,
-            title="Overview - Drag to select time range"
+        overview = (
+            base.encode(
+                x=alt.X(
+                    f"{idx_date}:T",
+                    title="Date",
+                    axis=alt.Axis(format="%b %Y"),
+                    scale=alt.Scale(nice=False),
+                ),
+                y=alt.Y(
+                    "value:Q",
+                    scale=alt.Scale(domain=domain),
+                    axis=alt.Axis(tickCount=3),
+                ),
+            )
+            .add_params(brush)
+            .properties(
+                width="container",
+                height=80,
+                title="Overview - Drag to select time range",
+            )
         )
 
         # Add tirzepatide marker to overview
@@ -474,11 +494,11 @@ def _(alt, df, display, idx_date, idx_weight, pd):
         )
 
         # Combine detail and overview vertically
-        combined = alt.vconcat(
-            detail + rule_detail + text_detail,
-            overview + rule_overview
-        ).resolve_scale(
-            color='shared'
+        # Use autosize to make the entire chart (including axes) fit within container
+        combined = (
+            alt.vconcat(detail + rule_detail + text_detail, overview + rule_overview)
+            .resolve_scale(color="shared")
+            .properties(autosize=alt.AutoSizeParams(type="fit", contains="padding"))
         )
 
         display(combined)
@@ -486,7 +506,7 @@ def _(alt, df, display, idx_date, idx_weight, pd):
 
     _earliest = df.index[-1] - pd.DateOffset(years=1)  # Use index instead of .Date
     graph_weight_as_line(df[_earliest:], "Week", (180, 205))
-    return (graph_weight_as_line, graph_weight_overview_detail)
+    return graph_weight_as_line, graph_weight_overview_detail
 
 
 @app.cell
@@ -502,7 +522,7 @@ def _(df, graph_weight_as_line):
 
 
 @app.cell
-def _(df, graph_weight_overview_detail, mo):
+def _(mo):
     mo.md(r"""
     ## Interactive Overview + Detail Chart
 
@@ -550,9 +570,7 @@ def _(animation, dfM, mo, plt, timedelta):
         year = f"{anim_year_base + i}"
         ax.clear()
         dfM[f"{anim_year_base}" : year].plot(
-            title=f"Weight through {year}",
-            ylim=(_min_weight, max_weight),
-            ax=ax
+            title=f"Weight through {year}", ylim=(_min_weight, max_weight), ax=ax
         )
         ax.set_ylabel("lbs")
         ax.set_xlabel("")
@@ -567,6 +585,7 @@ def _(animation, dfM, mo, plt, timedelta):
     # Use to_jshtml() instead of to_html5_video() - works in browser without ffmpeg
     # Return the HTML output so marimo displays it
     mo.Html(anim.to_jshtml())
+    return
 
 
 @app.cell
