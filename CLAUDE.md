@@ -100,6 +100,88 @@ marimo export weight_analysis_marimo.py
   - Extract both the port number and access token from marimo's stdout (look for the URL line)
 - Default host is `127.0.0.1` (localhost only, most secure)
 
+### Testing Marimo Notebooks with Playwright
+
+To capture screenshots and analyze marimo notebook output programmatically:
+
+```bash
+# 1. Install playwright browsers (one-time setup)
+uv run playwright install chromium
+
+# 2. Start marimo notebook in background
+uv run marimo edit <notebook>.py --host 127.0.0.1 --port 8765 --headless --no-token &
+
+# 3. Create a playwright script to capture screenshots
+```
+
+**Example Playwright Script** (`capture_marimo.py`):
+
+```python
+#!/usr/bin/env python3
+import asyncio
+from playwright.async_api import async_playwright
+
+async def capture_screenshots():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch()
+        page = await browser.new_page(viewport={'width': 1920, 'height': 1200})
+
+        # Navigate and wait for load
+        await page.goto('http://localhost:8765', wait_until='networkidle')
+        await asyncio.sleep(10)
+
+        # Capture full page
+        await page.screenshot(
+            path='~/tmp/marimo-screenshots/full-page.png',
+            full_page=True
+        )
+
+        # Scroll and capture sections
+        page_height = await page.evaluate('document.documentElement.scrollHeight')
+        viewport_height = await page.evaluate('window.innerHeight')
+        max_scroll = page_height - viewport_height
+
+        # Scroll to specific positions (e.g., 60% for mid-page charts)
+        scroll_pos = int(max_scroll * 0.6)
+        await page.evaluate(f'window.scrollTo(0, {scroll_pos})')
+        await asyncio.sleep(2)
+
+        await page.screenshot(
+            path='~/tmp/marimo-screenshots/chart-section.png'
+        )
+
+        await browser.close()
+
+asyncio.run(capture_screenshots())
+```
+
+**Run the script:**
+
+```bash
+uv run python capture_marimo.py
+```
+
+**Analyze screenshots with image-content-analyzer agent:**
+
+Use the `image-content-analyzer` agent from `.claude/agents/` to analyze the captured screenshots:
+
+```
+I need you to analyze the marimo notebook screenshots at:
+- ~/tmp/marimo-screenshots/full-page.png
+- ~/tmp/marimo-screenshots/chart-section.png
+
+Please check if the charts render correctly and fit within their containers.
+```
+
+The agent will provide detailed analysis of visual elements, chart rendering quality, and layout issues.
+
+**Important Limitations:**
+
+- **Manual execution required**: Marimo notebooks in `run` or `edit` mode require clicking the "Run" button to execute cells
+- **Headless challenges**: In headless mode, marimo may not auto-execute cells even with `--headless` flag
+- **For automated testing**: Consider exporting to HTML with `marimo export` or running as a Python script for CI/CD
+- **Best for manual QA**: Playwright + screenshots work best for manual visual QA of interactive charts
+
 ### Type Checking Notebooks
 
 ```bash
