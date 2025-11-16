@@ -380,17 +380,36 @@ def _(alt, df, display, idx_date, idx_weight, pd):
         )
 
         # Detail chart (top) - shows zoomed view based on brush selection
-        detail = base.encode(
+        # Create left y-axis
+        detail_left = base.encode(
             x=alt.X(
                 f"{idx_date}:T",
                 scale=alt.Scale(domain=brush),
                 title="Date",
                 axis=alt.Axis(format="%b %Y"),
             ),
-            y=alt.Y("value:Q", scale=alt.Scale(domain=domain)),
-        ).properties(
-            height=400,
-            title=f"{metric} By {freq} - Detail View (median p50) - brush below to zoom",
+            y=alt.Y("value:Q", scale=alt.Scale(domain=domain), title="Weight (lbs)"),
+        )
+
+        # Create invisible right y-axis
+        detail_right = base.mark_line(opacity=0).encode(
+            x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush), axis=None),
+            y=alt.Y(
+                "value:Q",
+                scale=alt.Scale(domain=domain),
+                title="",
+                axis=alt.Axis(orient="right"),
+            ),
+        )
+
+        detail = (
+            (detail_left + detail_right)
+            .properties(
+                width="container",
+                height=400,
+                title=f"{metric} By {freq} - Detail View (median p50) - brush below to zoom",
+            )
+            .resolve_scale(y="shared")
         )
 
         # Add tirzepatide marker to detail view
@@ -429,7 +448,11 @@ def _(alt, df, display, idx_date, idx_weight, pd):
                 ),
             )
             .add_params(brush)
-            .properties(height=80, title="Overview - Drag to select time range")
+            .properties(
+                width="container",
+                height=80,
+                title="Overview - Drag to select time range",
+            )
         )
 
         # Add tirzepatide marker to overview

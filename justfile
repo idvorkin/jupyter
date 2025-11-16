@@ -10,6 +10,10 @@ test:
 fast-test:
     uv run pytest
 
+# Test marimo notebook execution
+test-marimo:
+    uv run python weight_analysis_marimo.py
+
 # Build WASM export
 build:
     uv run marimo export html-wasm weight_analysis_marimo.py -o public --mode edit --show-code --force
