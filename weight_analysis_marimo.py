@@ -118,8 +118,7 @@ def _():
     # CSV data file with merged historical weight data (2015-2025, 3,853 records)
     # This replaces the previous JSON-based approach
     data_filename = "HealthAutoExport-2010-03-03-2025-11-15.csv"
-
-    return data_filename, load_data_file, os, sys
+    return data_filename, load_data_file
 
 
 @app.cell
@@ -298,9 +297,9 @@ def _(mo):
     mo.md(r"""
     # Time Series Analysis using resampling
 
-    **Note:** The red dashed line on the charts below marks **February 2024**, when I started taking tirzepatide (Mounjaro/Zepbound).
-    This GLP-1 medication has been a game-changer for weight management.
-    You can read more about my experience at [idvork.in/terzepatide](https://idvork.in/terzepatide).
+    **Note:** The charts below include notable life events marked with dashed lines:
+    - **Red line (November 2016)**: Joined Amazon
+    - **Blue line (February 2024)**: Started taking tirzepatide (Mounjaro/Zepbound), a GLP-1 medication that has been a game-changer for weight management. You can read more about my experience at [idvork.in/terzepatide](https://idvork.in/terzepatide).
     """)
     return
 
@@ -309,6 +308,22 @@ def _(mo):
 def _(alt, df, display, idx_date, idx_weight, pd):
     print("Scroll to see year markers, select in index to zoom in")
     metric = idx_weight
+
+    # Notable events to display on charts
+    notable_events = pd.DataFrame(
+        [
+            {
+                "date": pd.Timestamp("2016-11-01", tz="UTC"),
+                "label": "Joined Amazon",
+                "color": "red",
+            },
+            {
+                "date": pd.Timestamp("2024-02-01", tz="UTC"),
+                "label": "Started Tirzepatide",
+                "color": "blue",
+            },
+        ]
+    )
 
     def make_domain(df):
         y_min = min(df[idx_weight])
@@ -347,28 +362,32 @@ def _(alt, df, display, idx_date, idx_weight, pd):
             .add_params(selection)
         )
 
-        # Add vertical line for tirzepatide start date (February 2024)
-        tirzepatide_date = pd.Timestamp("2024-02-01", tz="UTC")
-        rule = (
-            alt.Chart(pd.DataFrame({idx_date: [tirzepatide_date]}))
-            .mark_rule(color="red", strokeDash=[5, 5], size=2)
-            .encode(x=f"{idx_date}:T")
+        # Add vertical lines for notable events
+        rules = (
+            alt.Chart(notable_events)
+            .mark_rule(strokeDash=[5, 5], size=2)
+            .encode(
+                x=alt.X("date:T", title="Date"),
+                color=alt.Color(
+                    "color:N", scale=None
+                ),  # Use literal colors from dataframe
+            )
         )
 
-        # Add text annotation
-        text = (
-            alt.Chart(
-                pd.DataFrame(
-                    {idx_date: [tirzepatide_date], "label": ["Started Tirzepatide"]}
-                )
+        # Add text annotations for events
+        texts = (
+            alt.Chart(notable_events)
+            .mark_text(align="left", dx=5, dy=-10, fontSize=12)
+            .encode(
+                x="date:T",
+                text="label:N",
+                color=alt.Color("color:N", scale=None),
             )
-            .mark_text(align="left", dx=5, dy=-10, color="red", fontSize=12)
-            .encode(x=f"{idx_date}:T", text="label")
         )
 
         # Combine all layers
         c = (
-            (line_chart + rule + text)
+            (line_chart + rules + texts)
             .properties(
                 width="container",
                 height=chart_height,
@@ -443,23 +462,23 @@ def _(alt, df, display, idx_date, idx_weight, pd):
             .resolve_scale(y="shared")
         )
 
-        # Add tirzepatide marker to detail view
-        tirzepatide_date = pd.Timestamp("2024-02-01", tz="UTC")
-        rule_detail = (
-            alt.Chart(pd.DataFrame({idx_date: [tirzepatide_date]}))
-            .mark_rule(color="red", strokeDash=[5, 5], size=2)
-            .encode(x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush)))
+        # Add event markers to detail view
+        rules_detail = (
+            alt.Chart(notable_events)
+            .mark_rule(strokeDash=[5, 5], size=2)
+            .encode(
+                x=alt.X("date:T", scale=alt.Scale(domain=brush)),
+                color=alt.Color("color:N", scale=None),
+            )
         )
 
-        text_detail = (
-            alt.Chart(
-                pd.DataFrame(
-                    {idx_date: [tirzepatide_date], "label": ["Started Tirzepatide"]}
-                )
-            )
-            .mark_text(align="left", dx=5, dy=-10, color="red", fontSize=12)
+        texts_detail = (
+            alt.Chart(notable_events)
+            .mark_text(align="left", dx=5, dy=-10, fontSize=12)
             .encode(
-                x=alt.X(f"{idx_date}:T", scale=alt.Scale(domain=brush)), text="label"
+                x=alt.X("date:T", scale=alt.Scale(domain=brush)),
+                text="label:N",
+                color=alt.Color("color:N", scale=None),
             )
         )
 
@@ -486,17 +505,17 @@ def _(alt, df, display, idx_date, idx_weight, pd):
             )
         )
 
-        # Add tirzepatide marker to overview
-        rule_overview = (
-            alt.Chart(pd.DataFrame({idx_date: [tirzepatide_date]}))
-            .mark_rule(color="red", strokeDash=[5, 5], size=1)
-            .encode(x=f"{idx_date}:T")
+        # Add event markers to overview
+        rules_overview = (
+            alt.Chart(notable_events)
+            .mark_rule(strokeDash=[5, 5], size=1)
+            .encode(x="date:T", color=alt.Color("color:N", scale=None))
         )
 
         # Combine detail and overview vertically
         # Use autosize to make the entire chart (including axes) fit within container
         combined = (
-            alt.vconcat(detail + rule_detail + text_detail, overview + rule_overview)
+            alt.vconcat(detail + rules_detail + texts_detail, overview + rules_overview)
             .resolve_scale(color="shared")
             .properties(autosize=alt.AutoSizeParams(type="fit", contains="padding"))
         )
